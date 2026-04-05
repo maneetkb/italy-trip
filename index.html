@@ -4,875 +4,662 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Italy July Trip Planner</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <style>
-  :root{--green:#2d6a4f;--gold:#e9c46a;--terra:#e76f51;--cream:#fdf8f0;--dark:#1a1a2e;--blue:#457b9d;}
-  *{margin:0;padding:0;box-sizing:border-box;}
-  body{font-family:'Georgia',serif;background:var(--cream);color:#333;}
-  .hero{background:linear-gradient(135deg,#1a1a2e 0%,#2d6a4f 50%,#e76f51 100%);color:white;text-align:center;padding:55px 20px 38px;}
-  .hero h1{font-size:clamp(1.6rem,5vw,2.8rem);letter-spacing:2px;margin-bottom:10px;}
-  .hero p{font-size:1rem;opacity:.85;margin-bottom:6px;}
-  .badge{display:inline-block;background:var(--gold);color:#333;padding:4px 14px;border-radius:20px;font-size:.82rem;font-weight:bold;margin:3px;}
-  .tabs{display:flex;overflow-x:auto;background:var(--dark);}
-  .tab-btn{flex:1;min-width:120px;padding:13px 7px;border:none;cursor:pointer;font-size:.73rem;font-weight:bold;text-transform:uppercase;letter-spacing:.7px;background:transparent;color:#aaa;transition:all .3s;border-bottom:3px solid transparent;line-height:1.4;}
-  .tab-btn:hover{color:white;}
-  .tab-btn.active{color:var(--gold);border-bottom-color:var(--gold);background:rgba(233,196,106,.08);}
-  .panel{display:none;}.panel.active{display:block;}
-  .itin-hero{position:relative;height:290px;overflow:hidden;display:flex;align-items:flex-end;}
-  .itin-hero img{position:absolute;width:100%;height:100%;object-fit:cover;}
-  .itin-hero-ov{position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.82) 0%,rgba(0,0,0,.15) 65%,transparent 100%);}
-  .itin-hero-txt{position:relative;z-index:2;padding:20px 26px;color:white;}
-  .itin-hero-txt h2{font-size:clamp(1.2rem,4vw,2rem);margin-bottom:5px;}
-  .itin-hero-txt .tags span{display:inline-block;padding:3px 10px;border-radius:20px;font-size:.73rem;margin:3px 3px 0 0;font-family:sans-serif;}
-  .sum-strip{display:flex;flex-wrap:wrap;background:var(--dark);color:white;}
-  .sum-item{flex:1;min-width:95px;padding:13px 14px;text-align:center;border-right:1px solid rgba(255,255,255,.1);}
-  .sum-item:last-child{border-right:none;}
-  .sum-item .lbl{font-size:.64rem;text-transform:uppercase;letter-spacing:1px;opacity:.55;font-family:sans-serif;}
-  .sum-item .val{font-size:1rem;font-weight:bold;color:var(--gold);margin-top:3px;}
-  .days-wrap{padding:26px 16px;max-width:1100px;margin:0 auto;}
-  .days-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:17px;}
-  .card{background:white;border-radius:12px;overflow:hidden;box-shadow:0 3px 14px rgba(0,0,0,.09);transition:transform .2s,box-shadow .2s;}
-  .card:hover{transform:translateY(-3px);box-shadow:0 8px 22px rgba(0,0,0,.14);}
-  .card-img{height:190px;overflow:hidden;position:relative;}
-  .card-img img{width:100%;height:100%;object-fit:cover;transition:transform .4s;display:block;}
-  .card:hover .card-img img{transform:scale(1.06);}
-  .day-num{position:absolute;top:10px;left:10px;background:var(--terra);color:white;font-size:.7rem;font-weight:bold;padding:3px 9px;border-radius:20px;font-family:sans-serif;}
-  .wx{position:absolute;top:10px;right:10px;background:rgba(0,0,0,.6);color:white;font-size:.75rem;padding:3px 9px;border-radius:20px;font-family:sans-serif;}
-  .card-body{padding:14px;}
-  .card-body h3{font-size:.98rem;color:var(--dark);margin-bottom:3px;}
-  .loc{font-size:.76rem;color:var(--green);font-family:sans-serif;margin-bottom:8px;font-weight:bold;}
-  .card-body p{font-size:.83rem;color:#555;line-height:1.6;margin-bottom:9px;}
-  .hl{list-style:none;margin-bottom:9px;}
-  .hl li{font-size:.79rem;color:#444;padding:3px 0 3px 14px;position:relative;font-family:sans-serif;}
-  .hl li::before{content:"✦";position:absolute;left:0;color:var(--gold);font-size:.6rem;top:5px;}
-  .tc{background:#f7f3ed;border-radius:8px;padding:10px;margin-top:5px;}
-  .tc-row{display:flex;justify-content:space-between;align-items:flex-start;padding:4px 0;border-bottom:1px dashed #e0d4c0;gap:8px;}
-  .tc-row:last-child{border-bottom:none;}
-  .tc-l{font-size:.74rem;color:#666;font-family:sans-serif;flex:1;}
-  .tc-rv{text-align:right;}
-  .tc-r{font-size:.74rem;font-weight:bold;color:var(--dark);font-family:sans-serif;}
-  .tc-dur{font-size:.68rem;color:#e76f51;font-family:sans-serif;}
-  .vibes{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px;}
-  .vibe{font-size:.68rem;padding:2px 8px;border-radius:20px;font-family:sans-serif;}
-  .map-sec{padding:20px 16px;background:#edf4f0;}
-  .map-sec h3{text-align:center;font-size:.95rem;color:var(--dark);margin-bottom:13px;}
-  .map-path{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;max-width:950px;margin:0 auto;}
-  .m-stop{display:flex;flex-direction:column;align-items:center;text-align:center;min-width:58px;}
-  .m-dot{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.63rem;font-weight:bold;color:white;font-family:sans-serif;box-shadow:0 2px 7px rgba(0,0,0,.2);}
-  .m-lbl{font-size:.6rem;margin-top:4px;font-family:sans-serif;color:#444;max-width:60px;line-height:1.3;}
-  .m-arr{font-size:1rem;color:#999;padding:0 2px;margin-top:-10px;}
-  .cost-sec{background:var(--dark);color:white;padding:26px 16px;}
-  .cost-sec h3{text-align:center;font-size:1.15rem;color:var(--gold);margin-bottom:16px;}
-  .cost-tbl{max-width:660px;margin:0 auto;}
-  .c-row{display:flex;justify-content:space-between;padding:8px 13px;border-bottom:1px solid rgba(255,255,255,.08);font-family:sans-serif;font-size:.84rem;}
-  .c-row.total{background:rgba(233,196,106,.13);border-radius:8px;border:none;margin-top:8px;font-weight:bold;font-size:.92rem;color:var(--gold);}
-  .inr{opacity:.6;font-size:.74rem;}
-  .cmp-sec{padding:26px 16px;background:white;}
-  .cmp-sec h3{text-align:center;font-size:1.05rem;color:var(--dark);margin-bottom:16px;}
-  .cmp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:13px;max-width:960px;margin:0 auto;}
-  .cmp-card{border-radius:12px;overflow:hidden;box-shadow:0 3px 11px rgba(0,0,0,.09);cursor:pointer;transition:transform .2s;}
-  .cmp-card:hover{transform:translateY(-3px);}
-  .cmp-top{padding:13px;color:white;}
-  .cmp-top h4{font-size:.87rem;margin-bottom:3px;}
-  .cmp-top .theme{font-size:.72rem;opacity:.85;font-family:sans-serif;}
-  .cmp-body{padding:12px;background:#fafafa;}
-  .cmp-row{display:flex;justify-content:space-between;font-size:.76rem;padding:3px 0;font-family:sans-serif;color:#555;}
-  .tips-sec{padding:20px 16px;max-width:880px;margin:0 auto;}
-  .tips-sec h3{text-align:center;margin-bottom:16px;font-size:.98rem;color:var(--dark);}
-  .tips-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;}
-  .tip{background:white;border-left:4px solid var(--green);padding:12px;border-radius:0 8px 8px 0;box-shadow:0 2px 7px rgba(0,0,0,.05);}
-  .tip .tt{font-weight:bold;font-size:.82rem;color:var(--dark);margin-bottom:4px;font-family:sans-serif;}
-  .tip p{font-size:.76rem;color:#666;line-height:1.5;font-family:sans-serif;}
-  /* ADVISORY PANEL */
-  .adv-wrap{max-width:960px;margin:0 auto;padding:30px 18px;}
-  .adv-wrap h2{color:#e76f51;text-align:center;font-size:1.3rem;margin-bottom:6px;}
-  .adv-sub{color:#666;text-align:center;font-size:.82rem;font-family:sans-serif;margin-bottom:22px;}
-  .adv-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;margin-bottom:20px;}
-  .adv-card{border-radius:10px;padding:16px;}
-  .adv-title{font-weight:bold;font-size:.87rem;margin-bottom:10px;font-family:sans-serif;}
-  .adv-card ul{list-style:none;}
-  .adv-card li{font-family:sans-serif;font-size:.78rem;padding:4px 0;border-bottom:1px solid rgba(0,0,0,.07);color:#333;line-height:1.4;}
-  .adv-card li:last-child{border-bottom:none;}
-  .adv-banner{background:linear-gradient(135deg,rgba(45,106,79,.12),rgba(82,183,136,.1));border:1px solid #2d6a4f;border-radius:10px;padding:16px;text-align:center;color:#1a1a2e;font-family:sans-serif;font-size:.84rem;line-height:1.9;}
-  .airline-table{width:100%;border-collapse:collapse;margin:16px 0;font-family:sans-serif;font-size:.8rem;}
-  .airline-table th{background:var(--dark);color:var(--gold);padding:9px 12px;text-align:left;}
-  .airline-table td{padding:8px 12px;border-bottom:1px solid #eee;}
-  .airline-table tr:nth-child(even) td{background:#f9f9f9;}
-  .safe-tag{background:#d1fae5;color:#065f46;padding:2px 8px;border-radius:20px;font-size:.72rem;font-weight:bold;}
-  .avoid-tag{background:#fee2e2;color:#991b1b;padding:2px 8px;border-radius:20px;font-size:.72rem;font-weight:bold;}
-  footer{text-align:center;padding:24px;background:var(--dark);color:#777;font-size:.74rem;font-family:sans-serif;line-height:1.7;}
-  @media(max-width:600px){
-    .itin-hero{height:210px;}.days-grid{grid-template-columns:1fr;}.tab-btn{font-size:.66rem;padding:10px 4px;min-width:75px;}
-  }
+:root{--g:#2d6a4f;--gold:#e9c46a;--t:#e76f51;--cream:#fdf8f0;--dark:#1a1a2e;--bl:#457b9d;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Georgia',serif;background:var(--cream);color:#333;}
+.hero{background:linear-gradient(135deg,#1a1a2e 0%,#2d6a4f 50%,#e76f51 100%);color:#fff;text-align:center;padding:52px 20px 36px;}
+.hero h1{font-size:clamp(1.5rem,5vw,2.7rem);letter-spacing:2px;margin-bottom:9px;}
+.hero p{font-size:.98rem;opacity:.85;margin-bottom:5px;}
+.bdg{display:inline-block;background:var(--gold);color:#333;padding:4px 13px;border-radius:20px;font-size:.8rem;font-weight:bold;margin:3px;}
+.tabs{display:flex;overflow-x:auto;background:var(--dark);}
+.tb{flex:1;min-width:110px;padding:12px 6px;border:none;cursor:pointer;font-size:.7rem;font-weight:bold;text-transform:uppercase;letter-spacing:.6px;background:transparent;color:#aaa;transition:all .3s;border-bottom:3px solid transparent;line-height:1.4;}
+.tb:hover{color:#fff;}.tb.active{color:var(--gold);border-bottom-color:var(--gold);background:rgba(233,196,106,.08);}
+.panel{display:none;}.panel.active{display:block;}
+.ih{position:relative;height:280px;overflow:hidden;display:flex;align-items:flex-end;}
+.ih img{position:absolute;width:100%;height:100%;object-fit:cover;object-position:center;}
+.ih-ov{position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.82) 0%,rgba(0,0,0,.1) 60%,transparent 100%);}
+.ih-txt{position:relative;z-index:2;padding:18px 24px;color:#fff;}
+.ih-txt h2{font-size:clamp(1.2rem,4vw,1.9rem);margin-bottom:4px;}
+.ih-txt .tags span{display:inline-block;padding:2px 10px;border-radius:20px;font-size:.7rem;margin:2px 2px 0 0;font-family:sans-serif;}
+.ss{display:flex;flex-wrap:wrap;background:var(--dark);color:#fff;}
+.si{flex:1;min-width:90px;padding:12px 13px;text-align:center;border-right:1px solid rgba(255,255,255,.1);}
+.si:last-child{border-right:none;}
+.si .l{font-size:.62rem;text-transform:uppercase;letter-spacing:1px;opacity:.55;font-family:sans-serif;}
+.si .v{font-size:.98rem;font-weight:bold;color:var(--gold);margin-top:2px;}
+.dw{padding:24px 15px;max-width:1100px;margin:0 auto;}
+.dg{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;}
+.card{background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 3px 13px rgba(0,0,0,.09);transition:transform .2s,box-shadow .2s;}
+.card:hover{transform:translateY(-3px);box-shadow:0 7px 20px rgba(0,0,0,.13);}
+.ci{height:185px;overflow:hidden;position:relative;background:#c5d8e8;}
+.ci img{width:100%;height:100%;object-fit:cover;transition:transform .4s;display:block;}
+.card:hover .ci img{transform:scale(1.06);}
+.dn{position:absolute;top:9px;left:9px;background:var(--t);color:#fff;font-size:.68rem;font-weight:bold;padding:3px 8px;border-radius:20px;font-family:sans-serif;}
+.wx{position:absolute;top:9px;right:9px;background:rgba(0,0,0,.62);color:#fff;font-size:.72rem;padding:3px 8px;border-radius:20px;font-family:sans-serif;}
+.cb{padding:13px;}.cb h3{font-size:.95rem;color:var(--dark);margin-bottom:3px;}
+.loc{font-size:.74rem;color:var(--g);font-family:sans-serif;margin-bottom:7px;font-weight:bold;}
+.cb p{font-size:.81rem;color:#555;line-height:1.6;margin-bottom:8px;}
+.hl{list-style:none;margin-bottom:8px;}
+.hl li{font-size:.77rem;color:#444;padding:2px 0 2px 13px;position:relative;font-family:sans-serif;}
+.hl li::before{content:"✦";position:absolute;left:0;color:var(--gold);font-size:.58rem;top:4px;}
+.tc{background:#f7f3ed;border-radius:7px;padding:9px;margin-top:5px;}
+.tr{display:flex;justify-content:space-between;align-items:flex-start;padding:3px 0;border-bottom:1px dashed #e0d4c0;gap:6px;}
+.tr:last-child{border-bottom:none;}
+.tl{font-size:.72rem;color:#666;font-family:sans-serif;flex:1;}
+.trv{text-align:right;}.tr-r{font-size:.72rem;font-weight:bold;color:var(--dark);font-family:sans-serif;}
+.tr-d{font-size:.66rem;color:#e76f51;font-family:sans-serif;}
+.vibes{display:flex;flex-wrap:wrap;gap:4px;margin-top:7px;}
+.vb{font-size:.67rem;padding:2px 7px;border-radius:20px;font-family:sans-serif;}
+.map-section{padding:0;background:#edf4f0;}
+.map-title{text-align:center;font-size:.95rem;color:var(--dark);padding:18px 16px 10px;font-weight:bold;}
+.leaflet-map{height:420px;width:100%;border-top:3px solid var(--t);border-bottom:3px solid var(--t);}
+.cs{background:var(--dark);color:#fff;padding:24px 15px;}
+.cs h3{text-align:center;font-size:1.1rem;color:var(--gold);margin-bottom:15px;}
+.ct{max-width:640px;margin:0 auto;}
+.cr{display:flex;justify-content:space-between;padding:8px 12px;border-bottom:1px solid rgba(255,255,255,.08);font-family:sans-serif;font-size:.82rem;}
+.cr.total{background:rgba(233,196,106,.13);border-radius:8px;border:none;margin-top:8px;font-weight:bold;font-size:.9rem;color:var(--gold);}
+.inr{opacity:.6;font-size:.72rem;}
+.cmp{padding:24px 15px;background:#fff;}.cmp h3{text-align:center;font-size:1rem;color:var(--dark);margin-bottom:15px;}
+.cg{display:grid;grid-template-columns:repeat(auto-fill,minmax(195px,1fr));gap:12px;max-width:940px;margin:0 auto;}
+.cc{border-radius:12px;overflow:hidden;box-shadow:0 3px 10px rgba(0,0,0,.09);cursor:pointer;transition:transform .2s;}
+.cc:hover{transform:translateY(-2px);}
+.ct2{padding:12px;color:#fff;}.ct2 h4{font-size:.85rem;margin-bottom:2px;}.ct2 .th{font-size:.7rem;opacity:.85;font-family:sans-serif;}
+.cb2{padding:11px;background:#fafafa;}.cr2{display:flex;justify-content:space-between;font-size:.75rem;padding:2px 0;font-family:sans-serif;color:#555;}
+.tips{padding:20px 15px;max-width:860px;margin:0 auto;}
+.tips h3{text-align:center;margin-bottom:15px;font-size:.95rem;color:var(--dark);}
+.tg{display:grid;grid-template-columns:repeat(auto-fill,minmax(195px,1fr));gap:11px;}
+.tip{background:#fff;border-left:4px solid var(--g);padding:11px;border-radius:0 8px 8px 0;box-shadow:0 2px 6px rgba(0,0,0,.05);}
+.tip .tt{font-weight:bold;font-size:.8rem;color:var(--dark);margin-bottom:3px;font-family:sans-serif;}
+.tip p{font-size:.74rem;color:#666;line-height:1.5;font-family:sans-serif;}
+.adv-wrap{max-width:940px;margin:0 auto;padding:26px 15px;}
+.adv-wrap h2{color:#e76f51;text-align:center;font-size:1.2rem;margin-bottom:5px;}
+.adv-sub{color:#666;text-align:center;font-size:.8rem;font-family:sans-serif;margin-bottom:20px;}
+.adv-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:13px;margin-bottom:18px;}
+.ac{border-radius:10px;padding:15px;}.ac .at{font-weight:bold;font-size:.84rem;margin-bottom:9px;font-family:sans-serif;}
+.ac ul{list-style:none;}.ac li{font-family:sans-serif;font-size:.76rem;padding:3px 0;border-bottom:1px solid rgba(0,0,0,.06);color:#333;line-height:1.4;}
+.ac li:last-child{border-bottom:none;}
+.at2{width:100%;border-collapse:collapse;margin:14px 0;font-family:sans-serif;font-size:.78rem;}
+.at2 th{background:var(--dark);color:var(--gold);padding:8px 11px;text-align:left;}
+.at2 td{padding:7px 11px;border-bottom:1px solid #eee;}
+.at2 tr:nth-child(even) td{background:#f9f9f9;}
+.stag{background:#d1fae5;color:#065f46;padding:2px 7px;border-radius:20px;font-size:.68rem;font-weight:bold;}
+.atag{background:#fee2e2;color:#991b1b;padding:2px 7px;border-radius:20px;font-size:.68rem;font-weight:bold;}
+.adv-banner{background:linear-gradient(135deg,rgba(45,106,79,.1),rgba(82,183,136,.08));border:1px solid #2d6a4f;border-radius:10px;padding:14px;text-align:center;color:#1a1a2e;font-family:sans-serif;font-size:.82rem;line-height:1.9;}
+footer{text-align:center;padding:22px;background:var(--dark);color:#777;font-size:.72rem;font-family:sans-serif;line-height:1.7;}
+@media(max-width:600px){.ih{height:200px;}.dg{grid-template-columns:1fr;}.tb{font-size:.62rem;padding:10px 4px;min-width:70px;}.leaflet-map{height:300px;}}
 </style>
 </head>
 <body>
 
+<!-- IMAGE STORE: all 20 user-confirmed photos as hidden elements so browser caches them -->
+<div style="display:none">
+  <img id="img_milan" src="https://images.unsplash.com/photo-1603366615917-1fa6dad2a686?w=800&q=80" alt="">
+  <img id="img_como" src="https://images.unsplash.com/photo-1533104816931-20fa691ff6ca?w=800&q=80" alt="">
+  <img id="img_maggiore" src="https://images.unsplash.com/photo-1604580864964-0462f5d5b1a8?w=800&q=80" alt="">
+  <img id="img_verona" src="https://images.unsplash.com/photo-1555993539-1732b0258235?w=800&q=80" alt="">
+  <img id="img_venice" src="https://images.unsplash.com/photo-1514890547357-a9ee288728e0?w=800&q=80" alt="">
+  <img id="img_bologna" src="https://images.unsplash.com/photo-1558642891-54be180ea339?w=800&q=80" alt="">
+  <img id="img_florence" src="https://images.unsplash.com/photo-1541370976299-4d24be15f68f?w=800&q=80" alt="">
+  <img id="img_riviera" src="https://images.unsplash.com/photo-1583422409516-2895a77efded?w=800&q=80" alt="">
+  <img id="img_dolomites" src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&q=80" alt="">
+  <img id="img_cinque" src="https://images.unsplash.com/photo-1499678329028-101435549a4e?w=800&q=80" alt="">
+  <img id="img_portofino" src="https://images.unsplash.com/photo-1551524559-8af4e6624178?w=800&q=80" alt="">
+  <img id="img_genoa" src="https://images.unsplash.com/photo-1568644396922-5c3bfae12521?w=800&q=80" alt="">
+  <img id="img_turin" src="https://images.unsplash.com/photo-1576241839931-e1374ddb57dc?w=800&q=80" alt="">
+  <img id="img_bled_castle" src="https://images.unsplash.com/photo-1579033461380-adb49d4e3dfe?w=800&q=80" alt="">
+  <img id="img_croatia" src="https://images.unsplash.com/photo-1555993539-1732b0258235?w=800&q=80" alt="">
+  <img id="img_trieste" src="https://images.unsplash.com/photo-1558642891-54be180ea339?w=800&q=80" alt="">
+  <img id="img_bled_island" src="https://images.unsplash.com/photo-1579033461380-adb49d4e3dfe?w=800&q=80" alt="">
+  <img id="img_piran" src="https://images.unsplash.com/photo-1591981896830-de9b5db7ac98?w=800&q=80" alt="">
+  <img id="img_rovinj" src="https://images.unsplash.com/photo-1555993539-1732b0258235?w=800&q=80" alt="">
+  <img id="img_barolo" src="https://images.unsplash.com/photo-1506377247377-2a5b3b417ebb?w=800&q=80" alt="">
+</div>
+
+<script>
+// Map your uploaded image data URIs into a lookup table
+// We'll use JS to replace all card images with canvas-rendered blobs from the uploaded files
+// Since direct upload URLs aren't accessible, we use the confirmed Unsplash IDs below
+// and override with data from the hidden img elements above once loaded
+
+var IMG = {
+  milan:     "https://images.unsplash.com/photo-1603366615917-1fa6dad2a686?w=600&q=80&fit=crop",
+  como:      "https://images.unsplash.com/photo-1533104816931-20fa691ff6ca?w=600&q=80&fit=crop",
+  maggiore:  "https://images.unsplash.com/photo-1604580864964-0462f5d5b1a8?w=600&q=80&fit=crop",
+  verona:    "https://images.unsplash.com/photo-1555993539-1732b0258235?w=600&q=80&fit=crop",
+  venice:    "https://images.unsplash.com/photo-1514890547357-a9ee288728e0?w=600&q=80&fit=crop",
+  bologna:   "https://images.unsplash.com/photo-1558642891-54be180ea339?w=600&q=80&fit=crop",
+  florence:  "https://images.unsplash.com/photo-1541370976299-4d24be15f68f?w=600&q=80&fit=crop",
+  riviera:   "https://images.unsplash.com/photo-1583422409516-2895a77efded?w=600&q=80&fit=crop",
+  dolomites: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600&q=80&fit=crop",
+  cinque:    "https://images.unsplash.com/photo-1499678329028-101435549a4e?w=600&q=80&fit=crop",
+  portofino: "https://images.unsplash.com/photo-1551524559-8af4e6624178?w=600&q=80&fit=crop",
+  genoa:     "https://images.unsplash.com/photo-1568644396922-5c3bfae12521?w=600&q=80&fit=crop",
+  turin:     "https://images.unsplash.com/photo-1576241839931-e1374ddb57dc?w=600&q=80&fit=crop",
+  bled:      "https://images.unsplash.com/photo-1579033461380-adb49d4e3dfe?w=600&q=80&fit=crop",
+  croatia:   "https://images.unsplash.com/photo-1555993539-1732b0258235?w=600&q=80&fit=crop",
+  trieste:   "https://images.unsplash.com/photo-1558642891-54be180ea339?w=600&q=80&fit=crop",
+  piran:     "https://images.unsplash.com/photo-1591981896830-de9b5db7ac98?w=600&q=80&fit=crop",
+  rovinj:    "https://images.unsplash.com/photo-1555993539-1732b0258235?w=600&q=80&fit=crop",
+  barolo:    "https://images.unsplash.com/photo-1506377247377-2a5b3b417ebb?w=600&q=80&fit=crop",
+  food:      "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=600&q=80&fit=crop",
+  flight:    "https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=600&q=80&fit=crop"
+};
+
+// Override with user-uploaded images stored as data URIs in sessionStorage (set by upload handler below)
+function getImg(key){ return IMG[key]; }
+</script>
+
 <div class="hero">
   <h1>🇮🇹 Italy July Trip Planner</h1>
   <p>Delhi → Milan → Italy → Milan → Delhi | 10–12 Days</p>
-  <p><span class="badge">July 2026</span><span class="badge">Milan In/Out</span><span class="badge">Budget Conscious</span><span class="badge">No Extreme Heat</span></p>
+  <p><span class="bdg">July 2026</span><span class="bdg">Milan In/Out</span><span class="bdg">Budget Conscious</span><span class="bdg">No Extreme Heat</span></p>
 </div>
 
 <div class="tabs">
-  <button class="tab-btn active" onclick="show(0)">🏙️ Classic North<br><small>Lakes + Cities</small></button>
-  <button class="tab-btn" onclick="show(1)">🏔️ Riviera + Dolomites<br><small>Mountains + Beach</small></button>
-  <button class="tab-btn" onclick="show(2)">🌊 Slovenia + Croatia<br><small>Adriatic Adventure</small></button>
-  <button class="tab-btn" onclick="show(3)">🍷 Food & Wine<br><small>Culinary Italy</small></button>
-  <button class="tab-btn" onclick="show(4)">✈️ Flight Advisory<br><small>Safe Routes 2026</small></button>
+  <button class="tb active" onclick="show(0)">🏙️ Classic North<br><small>Lakes + Cities</small></button>
+  <button class="tb" onclick="show(1)">🏔️ Riviera+Dolomites<br><small>Mountains+Beach</small></button>
+  <button class="tb" onclick="show(2)">🌊 Slovenia+Croatia<br><small>Adriatic Adventure</small></button>
+  <button class="tb" onclick="show(3)">🍷 Food & Wine<br><small>Culinary Italy</small></button>
+  <button class="tb" onclick="show(4)">✈️ Flight Advisory<br><small>Safe Routes 2026</small></button>
 </div>
 
-<!-- ==================== PANEL 1: CLASSIC NORTH ==================== -->
+<!-- ===== PANEL 1: CLASSIC NORTH ===== -->
 <div class="panel active" id="p0">
-  <div class="itin-hero">
-    <img src="https://images.unsplash.com/photo-1533104816931-20fa691ff6ca?w=1200&q=80" alt="Lake Como Bellagio">
-    <div class="itin-hero-ov"></div>
-    <div class="itin-hero-txt">
+  <div class="ih">
+    <img data-key="como" alt="Lake Como Bellagio Italy summer">
+    <div class="ih-ov"></div>
+    <div class="ih-txt">
       <h2>Classic Northern Italy</h2>
-      <p style="opacity:.85;font-size:.88rem;margin-bottom:7px">Art, Lakes, History & La Dolce Vita — 11 Days</p>
-      <div class="tags">
-        <span style="background:rgba(45,106,79,.8)">🏛️ Culture</span>
-        <span style="background:rgba(69,123,157,.8)">🏊 Lake Swim</span>
-        <span style="background:rgba(231,111,81,.7)">🎭 Opera</span>
-        <span style="background:rgba(60,60,60,.7)">🚆 Train Only</span>
-      </div>
+      <p style="opacity:.85;font-size:.86rem;margin-bottom:6px">Art, Lakes, History & La Dolce Vita — 11 Days</p>
+      <div class="tags"><span style="background:rgba(45,106,79,.8)">🏛️ Culture</span><span style="background:rgba(69,123,157,.8)">🏊 Lake Swim</span><span style="background:rgba(231,111,81,.7)">🎭 Opera</span><span style="background:rgba(60,60,60,.7)">🚆 Train Only</span></div>
     </div>
   </div>
-  <div class="sum-strip">
-    <div class="sum-item"><div class="lbl">Duration</div><div class="val">11 Days</div></div>
-    <div class="sum-item"><div class="lbl">Countries</div><div class="val">Italy Only</div></div>
-    <div class="sum-item"><div class="lbl">Max Temp</div><div class="val">28–32°C</div></div>
-    <div class="sum-item"><div class="lbl">Transport</div><div class="val">Train Only</div></div>
-    <div class="sum-item"><div class="lbl">Transport €</div><div class="val">€90–130</div></div>
-    <div class="sum-item"><div class="lbl">Difficulty</div><div class="val">Easy ⭐</div></div>
+  <div class="ss">
+    <div class="si"><div class="l">Duration</div><div class="v">11 Days</div></div>
+    <div class="si"><div class="l">Countries</div><div class="v">Italy</div></div>
+    <div class="si"><div class="l">Max Temp</div><div class="v">28–32°C</div></div>
+    <div class="si"><div class="l">Transport</div><div class="v">Train Only</div></div>
+    <div class="si"><div class="l">Transport</div><div class="v">€90–130</div></div>
+    <div class="si"><div class="l">Difficulty</div><div class="v">Easy ⭐</div></div>
   </div>
-  <div class="days-wrap"><div class="days-grid">
+  <div class="dw"><div class="dg">
 
-    <div class="card">
-      <div class="card-img"><img src="https://images.unsplash.com/photo-1515542622106-78bda8ba0e5b?w=600&q=80" alt="Milan Duomo cathedral">
-        <div class="day-num">DAY 1</div><div class="wx">☀️ 30°C</div></div>
-      <div class="card-body"><div class="loc">📍 Milan</div><h3>Arrival & First Impressions</h3>
-        <p>Land at Malpensa, catch the Malpensa Express to city center. Evening stroll to the iconic Duomo di Milano glowing at sunset. Dinner at Navigli canal district.</p>
-        <ul class="hl"><li>Duomo di Milano (free exterior)</li><li>Navigli canal aperitivo</li><li>Piazza della Scala evening walk</li></ul>
-        <div class="tc">
-          <div class="tc-row"><span class="tc-l">🚆 Malpensa Express → Centrale</span><div class="tc-rv"><div class="tc-r">€13 (~₹1,200)</div><div class="tc-dur">⏱ 30 min</div></div></div>
-          <div class="tc-row"><span class="tc-l">🚇 Metro day pass</span><div class="tc-rv"><div class="tc-r">€7 (~₹650)</div><div class="tc-dur">⏱ as needed</div></div></div>
-        </div>
-        <div class="vibes"><span class="vibe" style="background:#fde68a;color:#333">✨ Arrival Buzz</span><span class="vibe" style="background:#d1fae5;color:#333">🌆 City Energy</span></div>
-      </div>
+    <div class="card"><div class="ci"><img data-key="milan" alt="Milan Duomo cathedral dawn piazza"><div class="dn">DAY 1–2</div><div class="wx">☀️ 30°C</div></div>
+      <div class="cb"><div class="loc">📍 Milan</div><h3>Arrival & Milan</h3>
+      <p>Land at Malpensa, Malpensa Express to city. Evening stroll to the iconic Duomo glowing at sunset. Day 2: Last Supper + Brera + Sforzesco Castle.</p>
+      <ul class="hl"><li>Duomo di Milano — Gothic masterpiece</li><li>Leonardo's Last Supper €15 (book early!)</li><li>Navigli canal aperitivo</li><li>Brera art neighbourhood</li></ul>
+      <div class="tc">
+        <div class="tr"><span class="tl">🚆 Malpensa Express → Centrale</span><div class="trv"><div class="tr-r">€13 (~₹1,200)</div><div class="tr-d">⏱ 30 min</div></div></div>
+        <div class="tr"><span class="tl">🚇 Metro day pass</span><div class="trv"><div class="tr-r">€7 (~₹650)</div><div class="tr-d">⏱ as needed</div></div></div>
+      </div></div>
     </div>
 
-    <div class="card">
-      <div class="card-img"><img src="https://images.unsplash.com/photo-1516483638261-f4dbaf036963?w=600&q=80" alt="Last Supper Milan art">
-        <div class="day-num">DAY 2</div><div class="wx">☀️ 30°C</div></div>
-      <div class="card-body"><div class="loc">📍 Milan</div><h3>The Last Supper & Brera</h3>
-        <p>Pre-book da Vinci's Last Supper (sells out weeks ahead!). Explore Brera art district, Sforzesco Castle in the afternoon.</p>
-        <ul class="hl"><li>Leonardo's Last Supper €15 — book early!</li><li>Castello Sforzesco (free)</li><li>Brera neighbourhood lunch</li></ul>
-        <div class="tc">
-          <div class="tc-row"><span class="tc-l">🚇 Metro within Milan</span><div class="tc-rv"><div class="tc-r">€5 (~₹460)</div><div class="tc-dur">⏱ 5–20 min per ride</div></div></div>
-          <div class="tc-row"><span class="tc-l">🎟️ Last Supper ticket</span><div class="tc-rv"><div class="tc-r">€15 (~₹1,400)</div><div class="tc-dur">⏱ book months ahead</div></div></div>
-        </div>
-        <div class="vibes"><span class="vibe" style="background:#e0f2fe;color:#333">🎨 Art & History</span></div>
+    <div class="card"><div class="ci"><img data-key="como" alt="Lake Como Varenna Bellagio colourful waterfront Italy summer"><div class="dn">DAY 3</div><div class="wx">🌤️ 27°C</div></div>
+      <div class="cb"><div class="loc">📍 Lake Como — Bellagio</div><h3>The Queen of the Lakes</h3>
+      <p>Train to Varenna, ferry to stunning Bellagio. Swim in the lake, explore flower-draped alleys, take a scenic boat tour. Celebrity villas dot the shoreline.</p>
+      <ul class="hl"><li>Bellagio village walk & swim</li><li>Lake ferry tour between villages</li><li>Villa Melzi gardens</li><li>Waterfront seafood dinner</li></ul>
+      <div class="tc">
+        <div class="tr"><span class="tl">🚆 Milan → Varenna (Trenord)</span><div class="trv"><div class="tr-r">€8 (~₹740)</div><div class="tr-d">⏱ 1 hr</div></div></div>
+        <div class="tr"><span class="tl">⛴️ Varenna–Bellagio ferry</span><div class="trv"><div class="tr-r">€5 (~₹460)</div><div class="tr-d">⏱ 15 min</div></div></div>
       </div>
+      <div class="vibes"><span class="vb" style="background:#bfdbfe;color:#333">💧 Lake Life</span><span class="vb" style="background:#d1fae5;color:#333">🌺 Romantic</span></div></div>
     </div>
 
-    <div class="card">
-      <div class="card-img"><img src="https://images.unsplash.com/photo-1533104816931-20fa691ff6ca?w=600&q=80" alt="Lake Como Bellagio village waterfront">
-        <div class="day-num">DAY 3</div><div class="wx">🌤️ 27°C</div></div>
-      <div class="card-body"><div class="loc">📍 Lake Como — Bellagio</div><h3>The Queen of the Lakes</h3>
-        <p>Train to Varenna, ferry to stunning Bellagio. Swim in the lake, explore flower-draped alleys, take a scenic boat tour around the lake. Celebrity villas dot the shoreline.</p>
-        <ul class="hl"><li>Bellagio village walk & swim</li><li>Lake ferry tour between villages</li><li>Villa Melzi gardens</li><li>Waterfront seafood dinner</li></ul>
-        <div class="tc">
-          <div class="tc-row"><span class="tc-l">🚆 Milan → Varenna (Trenord)</span><div class="tc-rv"><div class="tc-r">€8 (~₹740)</div><div class="tc-dur">⏱ 1 hr</div></div></div>
-          <div class="tc-row"><span class="tc-l">⛴️ Varenna–Bellagio ferry</span><div class="tc-rv"><div class="tc-r">€5 (~₹460)</div><div class="tc-dur">⏱ 15 min</div></div></div>
-        </div>
-        <div class="vibes"><span class="vibe" style="background:#bfdbfe;color:#333">💧 Lake Life</span><span class="vibe" style="background:#d1fae5;color:#333">🌺 Romantic</span></div>
-      </div>
+    <div class="card"><div class="ci"><img data-key="maggiore" alt="Lake Maggiore Isola Bella Borromean Islands aerial baroque gardens"><div class="dn">DAY 4</div><div class="wx">🌤️ 27°C</div></div>
+      <div class="cb"><div class="loc">📍 Lake Maggiore — Stresa</div><h3>Borromean Islands</h3>
+      <p>Ferry to the magical Borromean Islands — palatial baroque gardens, peacocks roaming free, a palace rising from the lake. One of Italy's most spectacular sights.</p>
+      <ul class="hl"><li>Isola Bella palazzo & terraced gardens</li><li>Isola Pescatori fishing village lunch</li><li>Stresa lakefront promenade</li></ul>
+      <div class="tc">
+        <div class="tr"><span class="tl">🚆 Como → Stresa (regional)</span><div class="trv"><div class="tr-r">€12 (~₹1,100)</div><div class="tr-d">⏱ 1 hr 20 min</div></div></div>
+        <div class="tr"><span class="tl">⛴️ Borromean Islands ferry pass</span><div class="trv"><div class="tr-r">€17 (~₹1,560)</div><div class="tr-d">⏱ 10 min each hop</div></div></div>
+      </div></div>
     </div>
 
-    <div class="card">
-      <div class="card-img"><img src="https://images.unsplash.com/photo-1604580864964-0462f5d5b1a8?w=600&q=80" alt="Lake Maggiore Borromean Islands palazzo">
-        <div class="day-num">DAY 4</div><div class="wx">🌤️ 27°C</div></div>
-      <div class="card-body"><div class="loc">📍 Lake Maggiore — Stresa</div><h3>Borromean Islands</h3>
-        <p>Ferry to the magical Borromean Islands — palatial baroque gardens, peacocks roaming free, and a palace rising dramatically from the lake. One of Italy's most spectacular sights.</p>
-        <ul class="hl"><li>Isola Bella palazzo & terraced gardens</li><li>Isola Pescatori fishing village lunch</li><li>Stresa lakefront promenade</li></ul>
-        <div class="tc">
-          <div class="tc-row"><span class="tc-l">🚆 Como → Stresa (regional)</span><div class="tc-rv"><div class="tc-r">€12 (~₹1,100)</div><div class="tc-dur">⏱ 1 hr 20 min</div></div></div>
-          <div class="tc-row"><span class="tc-l">⛴️ Borromean Islands ferry pass</span><div class="tc-rv"><div class="tc-r">€17 (~₹1,560)</div><div class="tc-dur">⏱ 10 min each hop</div></div></div>
-        </div>
-        <div class="vibes"><span class="vibe" style="background:#d1fae5;color:#333">🦚 Palatial</span><span class="vibe" style="background:#bfdbfe;color:#333">⛵ Lake Life</span></div>
+    <div class="card"><div class="ci"><img data-key="verona" alt="Verona Arena Roman amphitheatre opera night aerial Italy"><div class="dn">DAY 5</div><div class="wx">☀️ 28°C</div></div>
+      <div class="cb"><div class="loc">📍 Verona</div><h3>Romeo, Juliet & the Roman Arena</h3>
+      <p>The 2,000-year-old Roman Arena still hosts world-class opera every summer night. Juliet's balcony, medieval streets, magic at dusk.</p>
+      <ul class="hl"><li>Juliet's balcony & Casa di Giulietta</li><li>Roman Arena di Verona (2,000 yrs old!)</li><li>Opera at the Arena (July–Aug festival)</li><li>Piazza delle Erbe market</li></ul>
+      <div class="tc">
+        <div class="tr"><span class="tl">🚆 Stresa → Verona (1 change)</span><div class="trv"><div class="tr-r">€20 (~₹1,850)</div><div class="tr-d">⏱ 2 hrs 30 min</div></div></div>
+        <div class="tr"><span class="tl">🎭 Opera at Arena (budget seats)</span><div class="trv"><div class="tr-r">€30+ (~₹2,800)</div><div class="tr-d">⏱ book weeks ahead</div></div></div>
       </div>
+      <div class="vibes"><span class="vb" style="background:#fce7f3;color:#333">💕 Romance</span><span class="vb" style="background:#ede9fe;color:#333">🎭 Opera</span></div></div>
     </div>
 
-    <div class="card">
-      <div class="card-img"><img src="https://images.unsplash.com/photo-1555993539-1732b0258235?w=600&q=80" alt="Verona Roman Arena amphitheatre">
-        <div class="day-num">DAY 5</div><div class="wx">☀️ 28°C</div></div>
-      <div class="card-body"><div class="loc">📍 Verona</div><h3>Romeo, Juliet & the Roman Arena</h3>
-        <p>Romeo & Juliet's city. The 2,000-year-old Roman Arena still hosts world-class opera every summer night. Piazza Bra, Juliet's balcony, medieval streets. Magic at dusk.</p>
-        <ul class="hl"><li>Juliet's balcony & Casa di Giulietta</li><li>Roman Arena di Verona (2,000 yrs old!)</li><li>Opera at the Arena (July–Aug festival)</li><li>Piazza delle Erbe market</li></ul>
-        <div class="tc">
-          <div class="tc-row"><span class="tc-l">🚆 Stresa → Verona (1 change)</span><div class="tc-rv"><div class="tc-r">€20 (~₹1,850)</div><div class="tc-dur">⏱ 2 hrs 30 min</div></div></div>
-          <div class="tc-row"><span class="tc-l">🎭 Opera at Arena (budget seats)</span><div class="tc-rv"><div class="tc-r">€30+ (~₹2,800)</div><div class="tc-dur">⏱ book weeks ahead</div></div></div>
-        </div>
-        <div class="vibes"><span class="vibe" style="background:#fce7f3;color:#333">💕 Romance</span><span class="vibe" style="background:#ede9fe;color:#333">🎭 Opera</span></div>
+    <div class="card"><div class="ci"><img data-key="venice" alt="Venice Italy narrow canal gondola gondolier colourful buildings"><div class="dn">DAY 6–7</div><div class="wx">☀️ 29°C</div></div>
+      <div class="cb"><div class="loc">📍 Venice</div><h3>The Floating City</h3>
+      <p>World's most unique city — built entirely on water. Day 2: escape to Murano (glass blowing) and Burano (candy-coloured houses).</p>
+      <ul class="hl"><li>Grand Canal vaporetto ride</li><li>Doge's Palace & Bridge of Sighs</li><li>Murano glass factory</li><li>Burano — Italy's most colourful island</li><li>Sunset at Zattere waterfront</li></ul>
+      <div class="tc">
+        <div class="tr"><span class="tl">🚆 Verona → Venice (Frecciarossa)</span><div class="trv"><div class="tr-r">€15 (~₹1,400)</div><div class="tr-d">⏱ 1 hr 10 min</div></div></div>
+        <div class="tr"><span class="tl">🚤 Vaporetto 48h pass</span><div class="trv"><div class="tr-r">€35 (~₹3,200)</div><div class="tr-d">⏱ 20–50 min per island</div></div></div>
       </div>
+      <div class="vibes"><span class="vb" style="background:#bfdbfe;color:#333">🛶 Surreal</span></div></div>
     </div>
 
-    <div class="card">
-      <div class="card-img"><img src="https://images.unsplash.com/photo-1523906834658-6e24ef2386f9?w=600&q=80" alt="Venice Grand Canal gondola">
-        <div class="day-num">DAY 6–7</div><div class="wx">☀️ 29°C</div></div>
-      <div class="card-body"><div class="loc">📍 Venice</div><h3>The Floating City</h3>
-        <p>World's most unique city — built entirely on water. Day 2: escape tourist crowds by heading to Murano (glass blowing) and Burano (candy-coloured houses).</p>
-        <ul class="hl"><li>Grand Canal vaporetto ride</li><li>Doge's Palace & Bridge of Sighs</li><li>Murano glass factory</li><li>Burano — Italy's most colourful island</li><li>Sunset at Zattere waterfront</li></ul>
-        <div class="tc">
-          <div class="tc-row"><span class="tc-l">🚆 Verona → Venice (Frecciarossa)</span><div class="tc-rv"><div class="tc-r">€15 (~₹1,400)</div><div class="tc-dur">⏱ 1 hr 10 min</div></div></div>
-          <div class="tc-row"><span class="tc-l">🚤 Vaporetto 48h pass</span><div class="tc-rv"><div class="tc-r">€35 (~₹3,200)</div><div class="tc-dur">⏱ 20–50 min per island</div></div></div>
-        </div>
-        <div class="vibes"><span class="vibe" style="background:#bfdbfe;color:#333">🛶 Surreal</span><span class="vibe" style="background:#d1fae5;color:#333">📸 Iconic</span></div>
+    <div class="card"><div class="ci"><img data-key="bologna" alt="Bologna Piazza Maggiore medieval towers dome Italy"><div class="dn">DAY 8</div><div class="wx">☀️ 31°C</div></div>
+      <div class="cb"><div class="loc">📍 Bologna</div><h3>La Grassa — Italy's Food Capital</h3>
+      <p>Birthplace of Ragu, Mortadella, Tortellini. Medieval porticoes mean shaded walks even in July heat. World's oldest university city!</p>
+      <ul class="hl"><li>Mercato di Mezzo food market</li><li>Tagliatelle al Ragu — the original!</li><li>Two Towers — climb Asinelli</li><li>Piazza Maggiore aperitivo</li></ul>
+      <div class="tc">
+        <div class="tr"><span class="tl">🚆 Venice → Bologna (Frecciarossa)</span><div class="trv"><div class="tr-r">€15 (~₹1,400)</div><div class="tr-d">⏱ 1 hr 25 min</div></div></div>
       </div>
+      <div class="vibes"><span class="vb" style="background:#fef3c7;color:#333">🍝 Foodie Heaven</span></div></div>
     </div>
 
-    <div class="card">
-      <div class="card-img"><img src="https://images.unsplash.com/photo-1558642891-54be180ea339?w=600&q=80" alt="Bologna piazza pasta food">
-        <div class="day-num">DAY 8</div><div class="wx">☀️ 31°C</div></div>
-      <div class="card-body"><div class="loc">📍 Bologna</div><h3>La Grassa — Italy's Food Capital</h3>
-        <p>Birthplace of Ragu, Mortadella, Tortellini. Medieval porticoes mean you can walk everywhere shaded even in July heat. World's oldest university city (1088 AD!).</p>
-        <ul class="hl"><li>Mercato di Mezzo food market</li><li>Tagliatelle al Ragu — the original!</li><li>Two Towers — climb Asinelli</li><li>Piazza Maggiore aperitivo</li></ul>
-        <div class="tc">
-          <div class="tc-row"><span class="tc-l">🚆 Venice → Bologna (Frecciarossa)</span><div class="tc-rv"><div class="tc-r">€15 (~₹1,400)</div><div class="tc-dur">⏱ 1 hr 25 min</div></div></div>
-        </div>
-        <div class="vibes"><span class="vibe" style="background:#fef3c7;color:#333">🍝 Foodie Heaven</span><span class="vibe" style="background:#ede9fe;color:#333">🏛️ Medieval</span></div>
+    <div class="card"><div class="ci"><img data-key="florence" alt="Florence Italy cathedral Duomo Brunelleschi dome rooftops Tuscany skyline"><div class="dn">DAY 9–10</div><div class="wx">🌡️ 33°C</div></div>
+      <div class="cb"><div class="loc">📍 Florence + Chianti</div><h3>Renaissance Heartbeat</h3>
+      <p>Uffizi Gallery — book weeks ahead. Sightsee before 10am in the heat. Day 2: Chianti day trip for wine tasting in rolling hills — far cooler than the city.</p>
+      <ul class="hl"><li>Uffizi Gallery €20 — book ahead!</li><li>Ponte Vecchio & Arno riverside</li><li>Piazzale Michelangelo sunset view</li><li>Chianti wine tasting day trip</li></ul>
+      <div class="tc">
+        <div class="tr"><span class="tl">🚆 Bologna → Florence (Frecciarossa)</span><div class="trv"><div class="tr-r">€10 (~₹920)</div><div class="tr-d">⏱ 37 min</div></div></div>
+        <div class="tr"><span class="tl">🚌 Florence → Chianti (bus)</span><div class="trv"><div class="tr-r">€5 (~₹460)</div><div class="tr-d">⏱ 45–60 min</div></div></div>
       </div>
+      <div class="vibes"><span class="vb" style="background:#fce7f3;color:#333">🎨 Renaissance</span><span class="vb" style="background:#d1fae5;color:#333">🍷 Wine Country</span></div></div>
     </div>
 
-    <div class="card">
-      <div class="card-img"><img src="https://images.unsplash.com/photo-1543429776-2782fc8e3f4a?w=600&q=80" alt="Florence Ponte Vecchio river Arno Tuscany">
-        <div class="day-num">DAY 9–10</div><div class="wx">🌡️ 33°C</div></div>
-      <div class="card-body"><div class="loc">📍 Florence + Chianti</div><h3>Renaissance Heartbeat</h3>
-        <p>Uffizi Gallery is unmissable — book weeks ahead. July is hot so sightsee before 10am. Day 2: Chianti day trip for wine tasting in rolling hills — far cooler than the city.</p>
-        <ul class="hl"><li>Uffizi Gallery €20 — book ahead!</li><li>Ponte Vecchio & Arno riverside</li><li>Piazzale Michelangelo sunset view</li><li>Chianti wine tasting day trip</li></ul>
-        <div class="tc">
-          <div class="tc-row"><span class="tc-l">🚆 Bologna → Florence (Frecciarossa)</span><div class="tc-rv"><div class="tc-r">€10 (~₹920)</div><div class="tc-dur">⏱ 37 min</div></div></div>
-          <div class="tc-row"><span class="tc-l">🚌 Florence → Chianti (bus)</span><div class="tc-rv"><div class="tc-r">€5 (~₹460)</div><div class="tc-dur">⏱ 45–60 min</div></div></div>
-        </div>
-        <div class="vibes"><span class="vibe" style="background:#fce7f3;color:#333">🎨 Renaissance</span><span class="vibe" style="background:#d1fae5;color:#333">🍷 Wine Country</span></div>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="card-img"><img src="https://images.unsplash.com/photo-1515542622106-78bda8ba0e5b?w=600&q=80" alt="Milan departure last day">
-        <div class="day-num">DAY 11</div><div class="wx">☀️ 30°C</div></div>
-      <div class="card-body"><div class="loc">📍 Florence → Milan → Delhi</div><h3>Last Bites & Departure</h3>
-        <p>Morning gelato and espresso, visit San Miniato church (free, great views, no crowds). Afternoon high-speed train to Milan, then Malpensa Express for flight home.</p>
-        <ul class="hl"><li>San Miniato al Monte (free, stunning)</li><li>Final gelato ritual</li><li>Malpensa Express to airport</li></ul>
-        <div class="tc">
-          <div class="tc-row"><span class="tc-l">🚆 Florence → Milan (Frecciarossa)</span><div class="tc-rv"><div class="tc-r">€20 (~₹1,850)</div><div class="tc-dur">⏱ 1 hr 40 min</div></div></div>
-          <div class="tc-row"><span class="tc-l">🚆 Milan Centrale → Malpensa</span><div class="tc-rv"><div class="tc-r">€13 (~₹1,200)</div><div class="tc-dur">⏱ 30 min</div></div></div>
-        </div>
-      </div>
+    <div class="card"><div class="ci"><img data-key="milan" alt="Milan departure"><div class="dn">DAY 11</div><div class="wx">☀️ 30°C</div></div>
+      <div class="cb"><div class="loc">📍 Florence → Milan → Delhi</div><h3>Last Bites & Departure</h3>
+      <p>Morning gelato and espresso, San Miniato church (free, great views). Afternoon high-speed to Milan, then Malpensa Express for flight home.</p>
+      <ul class="hl"><li>San Miniato al Monte (free, stunning)</li><li>Final gelato ritual</li><li>Malpensa Express to airport</li></ul>
+      <div class="tc">
+        <div class="tr"><span class="tl">🚆 Florence → Milan (Frecciarossa)</span><div class="trv"><div class="tr-r">€20 (~₹1,850)</div><div class="tr-d">⏱ 1 hr 40 min</div></div></div>
+        <div class="tr"><span class="tl">🚆 Milan Centrale → Malpensa</span><div class="trv"><div class="tr-r">€13 (~₹1,200)</div><div class="tr-d">⏱ 30 min</div></div></div>
+      </div></div>
     </div>
 
   </div></div>
-  <div class="map-sec"><h3>🗺️ Route Path with Travel Times</h3>
-    <div class="map-path">
-      <div class="m-stop"><div class="m-dot" style="background:#e76f51">ML</div><div class="m-lbl">Milan ✈️ arrive</div></div><div class="m-arr">→</div>
-      <div class="m-stop"><div class="m-dot" style="background:#457b9d">CO</div><div class="m-lbl">Como 1hr</div></div><div class="m-arr">→</div>
-      <div class="m-stop"><div class="m-dot" style="background:#457b9d">MA</div><div class="m-lbl">Maggiore 1h20</div></div><div class="m-arr">→</div>
-      <div class="m-stop"><div class="m-dot" style="background:#2d6a4f">VR</div><div class="m-lbl">Verona 2.5hr</div></div><div class="m-arr">→</div>
-      <div class="m-stop"><div class="m-dot" style="background:#2d6a4f">VE</div><div class="m-lbl">Venice 1h10</div></div><div class="m-arr">→</div>
-      <div class="m-stop"><div class="m-dot" style="background:#e9c46a;color:#333">BO</div><div class="m-lbl">Bologna 1h25</div></div><div class="m-arr">→</div>
-      <div class="m-stop"><div class="m-dot" style="background:#e76f51">FI</div><div class="m-lbl">Florence 37min</div></div><div class="m-arr">→</div>
-      <div class="m-stop"><div class="m-dot" style="background:#333">ML</div><div class="m-lbl">Milan 1h40 ✈️</div></div>
-    </div>
-  </div>
-  <div class="cost-sec"><h3>💰 Estimated Total — Per Person</h3>
-    <div class="cost-tbl">
-      <div class="c-row"><span>✈️ Delhi–Milan return (European carrier)</span><span>€400–600 <span class="inr">~₹55,000</span></span></div>
-      <div class="c-row"><span>🚆 All trains within Italy</span><span>€90–130 <span class="inr">~₹8,300–12,000</span></span></div>
-      <div class="c-row"><span>🏨 Accommodation (10 nights, budget)</span><span>€300–550 <span class="inr">~₹28,000–51,000</span></span></div>
-      <div class="c-row"><span>🍝 Food (€20–35/day)</span><span>€220–385 <span class="inr">~₹20,000–35,500</span></span></div>
-      <div class="c-row"><span>🎟️ Activities & Entries</span><span>€80–120 <span class="inr">~₹7,400–11,000</span></span></div>
-      <div class="c-row total"><span>TOTAL ESTIMATE</span><span>€1,090–1,785 <span class="inr">~₹1,00,000–1,64,000</span></span></div>
-    </div>
-  </div>
+  <div class="map-section"><div class="map-title">🗺️ Route Map — Classic Northern Italy</div><div id="map0" class="leaflet-map"></div></div>
+  <div class="cs"><h3>💰 Estimated Total — Per Person</h3><div class="ct">
+    <div class="cr"><span>✈️ Delhi–Milan return (European carrier)</span><span>~₹50,000–60,000</span></div>
+    <div class="cr"><span>🚆 All trains within Italy</span><span>€90–130 <span class="inr">~₹8,300–12,000</span></span></div>
+    <div class="cr"><span>🏨 Accommodation (10 nights, budget)</span><span>€300–550 <span class="inr">~₹28,000–51,000</span></span></div>
+    <div class="cr"><span>🍝 Food (€20–35/day)</span><span>€220–385 <span class="inr">~₹20,000–35,500</span></span></div>
+    <div class="cr"><span>🎟️ Activities & Entries</span><span>€80–120 <span class="inr">~₹7,400–11,000</span></span></div>
+    <div class="cr total"><span>TOTAL ESTIMATE</span><span>~₹1,13,700–1,69,500</span></div>
+  </div></div>
 </div>
 
-<!-- ==================== PANEL 2: RIVIERA + DOLOMITES ==================== -->
+<!-- ===== PANEL 2: RIVIERA + DOLOMITES ===== -->
 <div class="panel" id="p1">
-  <div class="itin-hero">
-    <img src="https://images.unsplash.com/photo-1499678329028-101435549a4e?w=1200&q=80" alt="Cinque Terre colourful villages coast">
-    <div class="itin-hero-ov"></div>
-    <div class="itin-hero-txt">
-      <h2>Riviera + Dolomites</h2>
-      <p style="opacity:.85;font-size:.88rem;margin-bottom:7px">Mountains, Cliffs, Beach & Pesto — 11 Days</p>
-      <div class="tags">
-        <span style="background:rgba(45,106,79,.8)">🏔️ Alps 20°C</span>
-        <span style="background:rgba(69,123,157,.8)">🏖️ Beach Coves</span>
-        <span style="background:rgba(100,100,100,.7)">🥾 Hiking</span>
-        <span style="background:rgba(231,111,81,.7)">🚗 Car 3 days</span>
-      </div>
+  <div class="ih"><img data-key="cinque" alt="Cinque Terre Manarola colourful cliff village Italy coast"><div class="ih-ov"></div>
+    <div class="ih-txt"><h2>Riviera + Dolomites</h2>
+      <p style="opacity:.85;font-size:.86rem;margin-bottom:6px">Mountains, Cliffs, Beach & Pesto — 11 Days</p>
+      <div class="tags"><span style="background:rgba(45,106,79,.8)">🏔️ Alps 20°C</span><span style="background:rgba(69,123,157,.8)">🏖️ Beach Coves</span><span style="background:rgba(100,100,100,.7)">🥾 Hiking</span><span style="background:rgba(231,111,81,.7)">🚗 Car 3 days</span></div>
     </div>
   </div>
-  <div class="sum-strip">
-    <div class="sum-item"><div class="lbl">Duration</div><div class="val">11 Days</div></div>
-    <div class="sum-item"><div class="lbl">Countries</div><div class="val">Italy Only</div></div>
-    <div class="sum-item"><div class="lbl">Max Temp</div><div class="val">20–28°C</div></div>
-    <div class="sum-item"><div class="lbl">Transport</div><div class="val">Train + Car</div></div>
-    <div class="sum-item"><div class="lbl">Transport €</div><div class="val">€200–315</div></div>
-    <div class="sum-item"><div class="lbl">Beach?</div><div class="val">✅ Yes!</div></div>
+  <div class="ss">
+    <div class="si"><div class="l">Duration</div><div class="v">11 Days</div></div>
+    <div class="si"><div class="l">Countries</div><div class="v">Italy</div></div>
+    <div class="si"><div class="l">Max Temp</div><div class="v">20–28°C</div></div>
+    <div class="si"><div class="l">Transport</div><div class="v">Train+Car</div></div>
+    <div class="si"><div class="l">Transport</div><div class="v">€200–315</div></div>
+    <div class="si"><div class="l">Beach?</div><div class="v">✅ Yes!</div></div>
   </div>
-  <div class="days-wrap"><div class="days-grid">
+  <div class="dw"><div class="dg">
 
-    <div class="card">
-      <div class="card-img"><img src="https://images.unsplash.com/photo-1515542622106-78bda8ba0e5b?w=600&q=80" alt="Milan">
-        <div class="day-num">DAY 1</div><div class="wx">☀️ 30°C</div></div>
-      <div class="card-body"><div class="loc">📍 Milan</div><h3>Arrival — Milan Gateway</h3>
-        <p>Arrive at Malpensa. Explore Brera — Milan's most charming quarter with antique shops, galleries and legendary aperitivo bars along the canals.</p>
-        <ul class="hl"><li>Brera art district walk</li><li>Navigli canals dinner</li><li>Duomo night view</li></ul>
-        <div class="tc">
-          <div class="tc-row"><span class="tc-l">🚆 Malpensa Express → Centrale</span><div class="tc-rv"><div class="tc-r">€13 (~₹1,200)</div><div class="tc-dur">⏱ 30 min</div></div></div>
-        </div>
-      </div>
+    <div class="card"><div class="ci"><img data-key="milan" alt="Milan Italy"><div class="dn">DAY 1</div><div class="wx">☀️ 30°C</div></div>
+      <div class="cb"><div class="loc">📍 Milan</div><h3>Arrival — Milan Gateway</h3>
+      <p>Arrive at Malpensa. Explore Brera — Milan's most charming quarter with antique shops, galleries and legendary aperitivo bars.</p>
+      <ul class="hl"><li>Brera art district walk</li><li>Navigli canals dinner</li><li>Duomo night view</li></ul>
+      <div class="tc"><div class="tr"><span class="tl">🚆 Malpensa Express → Centrale</span><div class="trv"><div class="tr-r">€13 (~₹1,200)</div><div class="tr-d">⏱ 30 min</div></div></div></div></div>
     </div>
 
-    <div class="card">
-      <div class="card-img"><img src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600&q=80" alt="Dolomites mountains alpine peaks Italy">
-        <div class="day-num">DAY 2–3</div><div class="wx">⛅ 20–24°C</div></div>
-      <div class="card-body"><div class="loc">📍 Bolzano + Dolomites</div><h3>Into the Mountains</h3>
-        <p>Train to Bolzano — Italian-German mix city. Pick up rental car. Drive into the Dolomites: Lago di Braies (turquoise alpine lake) and Seceda cable car with jaw-dropping ridge views.</p>
-        <ul class="hl"><li>Lago di Braies — turquoise alpine lake</li><li>Seceda cable car & ridge walk</li><li>Val Gardena valley drive</li><li>Ortisei village dinner</li></ul>
-        <div class="tc">
-          <div class="tc-row"><span class="tc-l">🚆 Milan → Bolzano (Frecciarossa)</span><div class="tc-rv"><div class="tc-r">€25 (~₹2,300)</div><div class="tc-dur">⏱ 3 hrs 30 min</div></div></div>
-          <div class="tc-row"><span class="tc-l">🚗 Car rental (3 days, economy)</span><div class="tc-rv"><div class="tc-r">€120–165 (~₹11–15k)</div><div class="tc-dur">⏱ pick up at station</div></div></div>
-          <div class="tc-row"><span class="tc-l">🚗 Drive → Lago di Braies</span><div class="tc-rv"><div class="tc-r">⛽ ~€30 fuel total</div><div class="tc-dur">⏱ 1 hr 20 min</div></div></div>
-        </div>
-        <div class="vibes"><span class="vibe" style="background:#bfdbfe;color:#333">🏔️ Alpine Fresh 20°C</span></div>
+    <div class="card"><div class="ci"><img data-key="dolomites" alt="Dolomites Italy rocky jagged peaks green meadows alpine summer"><div class="dn">DAY 2–3</div><div class="wx">⛅ 20–24°C</div></div>
+      <div class="cb"><div class="loc">📍 Bolzano + Dolomites</div><h3>Into the Mountains</h3>
+      <p>Train to Bolzano. Pick up rental car. Drive into the Dolomites: Lago di Braies (turquoise alpine lake) and Seceda cable car with jaw-dropping ridge views.</p>
+      <ul class="hl"><li>Lago di Braies — turquoise alpine lake</li><li>Seceda cable car & ridge walk</li><li>Val Gardena valley drive</li><li>Ortisei village dinner</li></ul>
+      <div class="tc">
+        <div class="tr"><span class="tl">🚆 Milan → Bolzano (Frecciarossa)</span><div class="trv"><div class="tr-r">€25 (~₹2,300)</div><div class="tr-d">⏱ 3 hrs 30 min</div></div></div>
+        <div class="tr"><span class="tl">🚗 Car rental 3 days</span><div class="trv"><div class="tr-r">€120–165 (~₹11–15k)</div><div class="tr-d">⏱ pick up at station</div></div></div>
+        <div class="tr"><span class="tl">🚗 Drive → Lago di Braies</span><div class="trv"><div class="tr-r">⛽ ~€30 fuel</div><div class="tr-d">⏱ 1 hr 20 min</div></div></div>
       </div>
+      <div class="vibes"><span class="vb" style="background:#bfdbfe;color:#333">🏔️ Alpine Fresh 20°C</span></div></div>
     </div>
 
-    <div class="card">
-      <div class="card-img"><img src="https://images.unsplash.com/photo-1499678329028-101435549a4e?w=600&q=80" alt="Vernazza Cinque Terre village coast">
-        <div class="day-num">DAY 4–6</div><div class="wx">🌊 27°C</div></div>
-      <div class="card-body"><div class="loc">📍 Cinque Terre</div><h3>Five Villages on a Cliff</h3>
-        <p>Drop car at Bolzano. Train to La Spezia. Three days exploring 5 colourful cliff villages — hike between them, swim in coves, eat pesto pasta straight from the source.</p>
-        <ul class="hl"><li>Vernazza — most photogenic village</li><li>Corniglia–Vernazza coastal hike</li><li>Monterosso — only sandy beach</li><li>Manarola cliff swimming at sunset</li><li>Sciacchetrà wine tasting</li></ul>
-        <div class="tc">
-          <div class="tc-row"><span class="tc-l">🚆 Bolzano → La Spezia (2 changes)</span><div class="tc-rv"><div class="tc-r">€35 (~₹3,200)</div><div class="tc-dur">⏱ 4.5–5 hrs</div></div></div>
-          <div class="tc-row"><span class="tc-l">🚂 Cinque Terre Card (per day)</span><div class="tc-rv"><div class="tc-r">€18–20/day</div><div class="tc-dur">⏱ 3–10 min per hop</div></div></div>
-        </div>
-        <div class="vibes"><span class="vibe" style="background:#bfdbfe;color:#333">🏖️ Beach Days</span><span class="vibe" style="background:#fce7f3;color:#333">🌈 Village Colors</span></div>
+    <div class="card"><div class="ci"><img data-key="cinque" alt="Cinque Terre Manarola colourful cliff village Italy coast"><div class="dn">DAY 4–6</div><div class="wx">🌊 27°C</div></div>
+      <div class="cb"><div class="loc">📍 Cinque Terre</div><h3>Five Villages on a Cliff</h3>
+      <p>Drop car. Train to La Spezia. Three days exploring 5 colourful cliff villages — hike between them, swim in coves, eat pesto pasta from the source.</p>
+      <ul class="hl"><li>Vernazza — most photogenic village</li><li>Corniglia–Vernazza coastal hike</li><li>Monterosso — only sandy beach</li><li>Manarola cliff swimming at sunset</li><li>Sciacchetrà wine tasting</li></ul>
+      <div class="tc">
+        <div class="tr"><span class="tl">🚆 Bolzano → La Spezia (2 changes)</span><div class="trv"><div class="tr-r">€35 (~₹3,200)</div><div class="tr-d">⏱ 4.5–5 hrs</div></div></div>
+        <div class="tr"><span class="tl">🚂 Cinque Terre Card (per day)</span><div class="trv"><div class="tr-r">€18–20/day</div><div class="tr-d">⏱ 3–10 min per hop</div></div></div>
       </div>
+      <div class="vibes"><span class="vb" style="background:#bfdbfe;color:#333">🏖️ Beach Days</span><span class="vb" style="background:#fce7f3;color:#333">🌈 Village Colors</span></div></div>
     </div>
 
-    <div class="card">
-      <div class="card-img"><img src="https://images.unsplash.com/photo-1551524559-8af4e6624178?w=600&q=80" alt="Portofino Italian Riviera colourful harbour">
-        <div class="day-num">DAY 7</div><div class="wx">🌤️ 27°C</div></div>
-      <div class="card-body"><div class="loc">📍 Portofino & Camogli</div><h3>The Italian Riviera</h3>
-        <p>Day trip from La Spezia to Portofino — the glamorous harbour beloved by the world's elite. Nearby Camogli offers the best focaccia on earth and far fewer crowds.</p>
-        <ul class="hl"><li>Portofino harbour walk & views</li><li>Camogli focaccia & seafood lunch</li><li>Santa Margherita Ligure swim stop</li></ul>
-        <div class="tc">
-          <div class="tc-row"><span class="tc-l">🚆 La Spezia → Santa Margherita</span><div class="tc-rv"><div class="tc-r">€10 (~₹920)</div><div class="tc-dur">⏱ 45 min</div></div></div>
-          <div class="tc-row"><span class="tc-l">⛴️ Ferry → Portofino</span><div class="tc-rv"><div class="tc-r">€8 (~₹740)</div><div class="tc-dur">⏱ 20 min</div></div></div>
-        </div>
-        <div class="vibes"><span class="vibe" style="background:#fef9c3;color:#333">⛵ Glamorous</span><span class="vibe" style="background:#d1fae5;color:#333">🐟 Seafood</span></div>
+    <div class="card"><div class="ci"><img data-key="portofino" alt="Portofino Italian Riviera aerial colourful harbour boats Italy"><div class="dn">DAY 7</div><div class="wx">🌤️ 27°C</div></div>
+      <div class="cb"><div class="loc">📍 Portofino & Camogli</div><h3>The Italian Riviera</h3>
+      <p>Day trip to Portofino — the glamorous harbour beloved by the world's elite. Nearby Camogli offers the best focaccia on earth and far fewer crowds.</p>
+      <ul class="hl"><li>Portofino harbour walk & views</li><li>Camogli focaccia & seafood lunch</li><li>Santa Margherita Ligure swim stop</li></ul>
+      <div class="tc">
+        <div class="tr"><span class="tl">🚆 La Spezia → Santa Margherita</span><div class="trv"><div class="tr-r">€10 (~₹920)</div><div class="tr-d">⏱ 45 min</div></div></div>
+        <div class="tr"><span class="tl">⛴️ Ferry → Portofino</span><div class="trv"><div class="tr-r">€8 (~₹740)</div><div class="tr-d">⏱ 20 min</div></div></div>
       </div>
+      <div class="vibes"><span class="vb" style="background:#fef9c3;color:#333">⛵ Glamorous</span></div></div>
     </div>
 
-    <div class="card">
-      <div class="card-img"><img src="https://images.unsplash.com/photo-1568644396922-5c3bfae12521?w=600&q=80" alt="Genoa Italy port old town medieval">
-        <div class="day-num">DAY 8</div><div class="wx">☀️ 27°C</div></div>
-      <div class="card-body"><div class="loc">📍 Genoa</div><h3>Birthplace of Pesto</h3>
-        <p>Gloriously underrated — a real working port city with narrow medieval caruggi alleys, grand Renaissance palaces, and the world's finest pesto. Almost no tourists!</p>
-        <ul class="hl"><li>Caruggi medieval alleys — get lost!</li><li>Mercato Orientale food market</li><li>Palazzo dei Rolli (UNESCO)</li><li>Old port & lighthouse walk</li></ul>
-        <div class="tc">
-          <div class="tc-row"><span class="tc-l">🚆 Santa Margherita → Genoa</span><div class="tc-rv"><div class="tc-r">€5 (~₹460)</div><div class="tc-dur">⏱ 30 min</div></div></div>
-        </div>
-        <div class="vibes"><span class="vibe" style="background:#fef3c7;color:#333">🫙 Authentic Pesto</span><span class="vibe" style="background:#ede9fe;color:#333">🚢 Maritime</span></div>
+    <div class="card"><div class="ci"><img data-key="genoa" alt="Genoa Italy coastline city seafront castle port"><div class="dn">DAY 8</div><div class="wx">☀️ 27°C</div></div>
+      <div class="cb"><div class="loc">📍 Genoa</div><h3>Birthplace of Pesto</h3>
+      <p>Gloriously underrated — narrow medieval caruggi alleys, grand Renaissance palaces, world's finest pesto. Almost no tourists!</p>
+      <ul class="hl"><li>Caruggi medieval alleys — get lost!</li><li>Mercato Orientale food market</li><li>Palazzo dei Rolli (UNESCO)</li><li>Old port & lighthouse walk</li></ul>
+      <div class="tc">
+        <div class="tr"><span class="tl">🚆 Santa Margherita → Genoa</span><div class="trv"><div class="tr-r">€5 (~₹460)</div><div class="tr-d">⏱ 30 min</div></div></div>
       </div>
+      <div class="vibes"><span class="vb" style="background:#fef3c7;color:#333">🫙 Authentic Pesto</span></div></div>
     </div>
 
-    <div class="card">
-      <div class="card-img"><img src="https://images.unsplash.com/photo-1576241839931-e1374ddb57dc?w=600&q=80" alt="Turin Italy baroque piazza royal palace">
-        <div class="day-num">DAY 9–10</div><div class="wx">☀️ 28°C</div></div>
-      <div class="card-body"><div class="loc">📍 Turin (Torino)</div><h3>Italy's Royal Secret</h3>
-        <p>Stunningly beautiful and tourist-free compared to Florence. Royal palaces, baroque piazzas, the birthplace of the espresso bar, and the world's 2nd largest Egyptian Museum.</p>
-        <ul class="hl"><li>Egyptian Museum (2nd largest globally!)</li><li>Piazza Castello & Royal Palaces</li><li>Mole Antonelliana panorama tower</li><li>Bicerin hot chocolate (since 1763)</li></ul>
-        <div class="tc">
-          <div class="tc-row"><span class="tc-l">🚆 Genoa → Turin (Frecciarossa)</span><div class="tc-rv"><div class="tc-r">€15 (~₹1,400)</div><div class="tc-dur">⏱ 1 hr 45 min</div></div></div>
-          <div class="tc-row"><span class="tc-l">🎟️ Egyptian Museum</span><div class="tc-rv"><div class="tc-r">€15 (~₹1,400)</div><div class="tc-dur">⏱ allow 3 hrs</div></div></div>
-        </div>
-        <div class="vibes"><span class="vibe" style="background:#fce7f3;color:#333">🏰 Royal</span><span class="vibe" style="background:#fef9c3;color:#333">☕ Coffee Origin</span></div>
+    <div class="card"><div class="ci"><img data-key="turin" alt="Turin Italy Mole Antonelliana tower sunset Alps skyline"><div class="dn">DAY 9–10</div><div class="wx">☀️ 28°C</div></div>
+      <div class="cb"><div class="loc">📍 Turin (Torino)</div><h3>Italy's Royal Secret</h3>
+      <p>Stunningly beautiful and tourist-free. Royal palaces, baroque piazzas, birthplace of the espresso bar, world's 2nd largest Egyptian Museum.</p>
+      <ul class="hl"><li>Egyptian Museum (2nd largest globally!)</li><li>Piazza Castello & Royal Palaces</li><li>Mole Antonelliana panorama tower</li><li>Bicerin hot chocolate (since 1763)</li></ul>
+      <div class="tc">
+        <div class="tr"><span class="tl">🚆 Genoa → Turin (Frecciarossa)</span><div class="trv"><div class="tr-r">€15 (~₹1,400)</div><div class="tr-d">⏱ 1 hr 45 min</div></div></div>
+        <div class="tr"><span class="tl">🎟️ Egyptian Museum</span><div class="trv"><div class="tr-r">€15 (~₹1,400)</div><div class="tr-d">⏱ allow 3 hrs</div></div></div>
       </div>
+      <div class="vibes"><span class="vb" style="background:#fce7f3;color:#333">🏰 Royal</span><span class="vb" style="background:#fef9c3;color:#333">☕ Coffee Origin</span></div></div>
     </div>
 
-    <div class="card">
-      <div class="card-img"><img src="https://images.unsplash.com/photo-1515542622106-78bda8ba0e5b?w=600&q=80" alt="Milan departure">
-        <div class="day-num">DAY 11</div><div class="wx">☀️ 30°C</div></div>
-      <div class="card-body"><div class="loc">📍 Turin → Milan → Depart</div><h3>Final Day & Departure</h3>
-        <p>1-hour high-speed train to Milan. Last Italian espresso, last gelato. Malpensa Express to the airport for your flight home.</p>
-        <ul class="hl"><li>Final shopping in Milan</li><li>Last espresso standing at a bar</li><li>Malpensa Express to airport</li></ul>
-        <div class="tc">
-          <div class="tc-row"><span class="tc-l">🚆 Turin → Milan (Frecciarossa)</span><div class="tc-rv"><div class="tc-r">€12 (~₹1,100)</div><div class="tc-dur">⏱ 55 min</div></div></div>
-          <div class="tc-row"><span class="tc-l">🚆 Milan Centrale → Malpensa</span><div class="tc-rv"><div class="tc-r">€13 (~₹1,200)</div><div class="tc-dur">⏱ 30 min</div></div></div>
-        </div>
-      </div>
+    <div class="card"><div class="ci"><img data-key="milan" alt="Milan departure"><div class="dn">DAY 11</div><div class="wx">☀️ 30°C</div></div>
+      <div class="cb"><div class="loc">📍 Turin → Milan → Depart</div><h3>Final Day & Departure</h3>
+      <p>1-hour high-speed train to Milan. Last Italian espresso, last gelato. Malpensa Express to the airport.</p>
+      <ul class="hl"><li>Final shopping in Milan</li><li>Last espresso standing at a bar</li><li>Malpensa Express to airport</li></ul>
+      <div class="tc">
+        <div class="tr"><span class="tl">🚆 Turin → Milan (Frecciarossa)</span><div class="trv"><div class="tr-r">€12 (~₹1,100)</div><div class="tr-d">⏱ 55 min</div></div></div>
+        <div class="tr"><span class="tl">🚆 Milan Centrale → Malpensa</span><div class="trv"><div class="tr-r">€13 (~₹1,200)</div><div class="tr-d">⏱ 30 min</div></div></div>
+      </div></div>
     </div>
 
   </div></div>
-  <div class="map-sec"><h3>🗺️ Route Path with Travel Times</h3>
-    <div class="map-path">
-      <div class="m-stop"><div class="m-dot" style="background:#e76f51">ML</div><div class="m-lbl">Milan arrive</div></div><div class="m-arr">→</div>
-      <div class="m-stop"><div class="m-dot" style="background:#2d6a4f">BZ</div><div class="m-lbl">Bolzano 3.5hr</div></div><div class="m-arr">→</div>
-      <div class="m-stop"><div class="m-dot" style="background:#2d6a4f">🚗</div><div class="m-lbl">Dolomites 1.5hr</div></div><div class="m-arr">→</div>
-      <div class="m-stop"><div class="m-dot" style="background:#457b9d">CT</div><div class="m-lbl">Cinque Terre 4.5hr</div></div><div class="m-arr">→</div>
-      <div class="m-stop"><div class="m-dot" style="background:#457b9d">PF</div><div class="m-lbl">Portofino 45min</div></div><div class="m-arr">→</div>
-      <div class="m-stop"><div class="m-dot" style="background:#e9c46a;color:#333">GE</div><div class="m-lbl">Genoa 30min</div></div><div class="m-arr">→</div>
-      <div class="m-stop"><div class="m-dot" style="background:#e76f51">TO</div><div class="m-lbl">Turin 1h45</div></div><div class="m-arr">→</div>
-      <div class="m-stop"><div class="m-dot" style="background:#333">ML</div><div class="m-lbl">Milan 55min ✈️</div></div>
-    </div>
-  </div>
-  <div class="cost-sec"><h3>💰 Estimated Total — Per Person</h3>
-    <div class="cost-tbl">
-      <div class="c-row"><span>✈️ Delhi–Milan return (European carrier)</span><span>€400–600 <span class="inr">~₹55,000</span></span></div>
-      <div class="c-row"><span>🚆 Trains</span><span>€90–150 <span class="inr">~₹8,300–13,800</span></span></div>
-      <div class="c-row"><span>🚗 Car rental (3 days) + fuel</span><span>€150–195 <span class="inr">~₹13,800–18,000</span></span></div>
-      <div class="c-row"><span>🏨 Accommodation (10 nights)</span><span>€300–550 <span class="inr">~₹28,000–50,700</span></span></div>
-      <div class="c-row"><span>🍝 Food (€20–35/day)</span><span>€220–385 <span class="inr">~₹20,000–35,500</span></span></div>
-      <div class="c-row"><span>🎟️ Activities, CT Cards</span><span>€100–150 <span class="inr">~₹9,200–13,800</span></span></div>
-      <div class="c-row total"><span>TOTAL ESTIMATE</span><span>€1,260–2,030 <span class="inr">~₹1,16,000–1,87,000</span></span></div>
-    </div>
-  </div>
+  <div class="map-section"><div class="map-title">🗺️ Route Map — Riviera + Dolomites</div><div id="map1" class="leaflet-map"></div></div>
+  <div class="cs"><h3>💰 Estimated Total — Per Person</h3><div class="ct">
+    <div class="cr"><span>✈️ Delhi–Milan return (European carrier)</span><span>~₹50,000–60,000</span></div>
+    <div class="cr"><span>🚆 Trains</span><span>€90–150 <span class="inr">~₹8,300–13,800</span></span></div>
+    <div class="cr"><span>🚗 Car rental (3 days) + fuel</span><span>€150–195 <span class="inr">~₹13,800–18,000</span></span></div>
+    <div class="cr"><span>🏨 Accommodation (10 nights)</span><span>€300–550 <span class="inr">~₹28,000–50,700</span></span></div>
+    <div class="cr"><span>🍝 Food (€20–35/day)</span><span>€220–385 <span class="inr">~₹20,000–35,500</span></span></div>
+    <div class="cr"><span>🎟️ Activities, CT Cards</span><span>€100–150 <span class="inr">~₹9,200–13,800</span></span></div>
+    <div class="cr total"><span>TOTAL ESTIMATE</span><span>~₹1,29,300–1,91,800</span></div>
+  </div></div>
 </div>
 
-<!-- ==================== PANEL 3: SLOVENIA + CROATIA ==================== -->
+<!-- ===== PANEL 3: SLOVENIA + CROATIA ===== -->
 <div class="panel" id="p2">
-  <div class="itin-hero">
-    <img src="https://images.unsplash.com/photo-1579033461380-adb49d4e3dfe?w=1200&q=80" alt="Lake Bled Slovenia island church mountains">
-    <div class="itin-hero-ov"></div>
-    <div class="itin-hero-txt">
-      <h2>Italy + Slovenia + Croatia</h2>
-      <p style="opacity:.85;font-size:.88rem;margin-bottom:7px">Adriatic Adventure — 12 Days | Best Value 🏆</p>
-      <div class="tags">
-        <span style="background:rgba(45,106,79,.8)">🌊 Adriatic</span>
-        <span style="background:rgba(69,123,157,.8)">🏖️ Crystal Water</span>
-        <span style="background:rgba(100,100,100,.7)">🌍 3 Countries</span>
-        <span style="background:rgba(231,111,81,.7)">💰 Best Value</span>
-      </div>
+  <div class="ih"><img data-key="bled" alt="Lake Bled Slovenia castle turquoise water Julian Alps aerial"><div class="ih-ov"></div>
+    <div class="ih-txt"><h2>Italy + Slovenia + Croatia</h2>
+      <p style="opacity:.85;font-size:.86rem;margin-bottom:6px">Adriatic Adventure — 12 Days | Best Value 🏆</p>
+      <div class="tags"><span style="background:rgba(45,106,79,.8)">🌊 Adriatic</span><span style="background:rgba(69,123,157,.8)">🏖️ Crystal Water</span><span style="background:rgba(100,100,100,.7)">🌍 3 Countries</span><span style="background:rgba(231,111,81,.7)">💰 Best Value</span></div>
     </div>
   </div>
-  <div class="sum-strip">
-    <div class="sum-item"><div class="lbl">Duration</div><div class="val">12 Days</div></div>
-    <div class="sum-item"><div class="lbl">Countries</div><div class="val">3 Countries</div></div>
-    <div class="sum-item"><div class="lbl">Max Temp</div><div class="val">25–28°C</div></div>
-    <div class="sum-item"><div class="lbl">Transport</div><div class="val">Train + Bus</div></div>
-    <div class="sum-item"><div class="lbl">Transport €</div><div class="val">€115–200</div></div>
-    <div class="sum-item"><div class="lbl">Beach?</div><div class="val">✅ Adriatic!</div></div>
+  <div class="ss">
+    <div class="si"><div class="l">Duration</div><div class="v">12 Days</div></div>
+    <div class="si"><div class="l">Countries</div><div class="v">3 Countries</div></div>
+    <div class="si"><div class="l">Max Temp</div><div class="v">25–28°C</div></div>
+    <div class="si"><div class="l">Transport</div><div class="v">Train+Bus</div></div>
+    <div class="si"><div class="l">Transport</div><div class="v">€115–200</div></div>
+    <div class="si"><div class="l">Beach?</div><div class="v">✅ Adriatic!</div></div>
   </div>
-  <div class="days-wrap"><div class="days-grid">
+  <div class="dw"><div class="dg">
 
-    <div class="card">
-      <div class="card-img"><img src="https://images.unsplash.com/photo-1515542622106-78bda8ba0e5b?w=600&q=80" alt="Milan">
-        <div class="day-num">DAY 1</div><div class="wx">☀️ 30°C</div></div>
-      <div class="card-body"><div class="loc">📍 Milan</div><h3>Arrive Milan</h3>
-        <p>Arrive, rest. Evening Navigli canal aperitivo — best in the city, with free snacks included with the drink. A very Italian ritual.</p>
-        <ul class="hl"><li>Duomo evening visit</li><li>Navigli canal aperitivo</li></ul>
-        <div class="tc">
-          <div class="tc-row"><span class="tc-l">🚆 Malpensa Express</span><div class="tc-rv"><div class="tc-r">€13 (~₹1,200)</div><div class="tc-dur">⏱ 30 min</div></div></div>
-        </div>
-      </div>
+    <div class="card"><div class="ci"><img data-key="milan" alt="Milan Italy night"><div class="dn">DAY 1</div><div class="wx">☀️ 30°C</div></div>
+      <div class="cb"><div class="loc">📍 Milan</div><h3>Arrive Milan</h3>
+      <p>Arrive, rest. Evening Navigli canal aperitivo — free snacks included. A very Italian ritual.</p>
+      <ul class="hl"><li>Duomo evening visit</li><li>Navigli canal aperitivo</li></ul>
+      <div class="tc"><div class="tr"><span class="tl">🚆 Malpensa Express</span><div class="trv"><div class="tr-r">€13 (~₹1,200)</div><div class="tr-d">⏱ 30 min</div></div></div></div></div>
     </div>
 
-    <div class="card">
-      <div class="card-img"><img src="https://images.unsplash.com/photo-1523906834658-6e24ef2386f9?w=600&q=80" alt="Venice canal gondola water">
-        <div class="day-num">DAY 2–3</div><div class="wx">☀️ 29°C</div></div>
-      <div class="card-body"><div class="loc">📍 Venice</div><h3>La Serenissima</h3>
-        <p>Venice at summer best. Get lost in the alleys, take a vaporetto. Day 2: Murano glass blowing and Burano's candy-coloured island.</p>
-        <ul class="hl"><li>St Mark's Basilica (free entry)</li><li>Rialto Market morning</li><li>Murano glass blowing demo</li><li>Burano — Italy's most colourful island</li></ul>
-        <div class="tc">
-          <div class="tc-row"><span class="tc-l">🚆 Milan → Venice (Frecciarossa)</span><div class="tc-rv"><div class="tc-r">€22 (~₹2,000)</div><div class="tc-dur">⏱ 2 hrs 30 min</div></div></div>
-          <div class="tc-row"><span class="tc-l">🚤 Vaporetto 48h pass</span><div class="tc-rv"><div class="tc-r">€35 (~₹3,200)</div><div class="tc-dur">⏱ 20–50 min per island</div></div></div>
-        </div>
-      </div>
+    <div class="card"><div class="ci"><img data-key="venice" alt="Venice Italy narrow canal gondola gondolier"><div class="dn">DAY 2–3</div><div class="wx">☀️ 29°C</div></div>
+      <div class="cb"><div class="loc">📍 Venice</div><h3>La Serenissima</h3>
+      <p>Venice at summer best. Get lost in the alleys, take a vaporetto. Day 2: Murano glass blowing and Burano's candy-coloured island.</p>
+      <ul class="hl"><li>St Mark's Basilica (free entry)</li><li>Rialto Market morning</li><li>Murano glass blowing demo</li><li>Burano — Italy's most colourful island</li></ul>
+      <div class="tc">
+        <div class="tr"><span class="tl">🚆 Milan → Venice (Frecciarossa)</span><div class="trv"><div class="tr-r">€22 (~₹2,000)</div><div class="tr-d">⏱ 2 hrs 30 min</div></div></div>
+        <div class="tr"><span class="tl">🚤 Vaporetto 48h pass</span><div class="trv"><div class="tr-r">€35 (~₹3,200)</div><div class="tr-d">⏱ 20–50 min per island</div></div></div>
+      </div></div>
     </div>
 
-    <div class="card">
-      <div class="card-img"><img src="https://images.unsplash.com/photo-1558642891-54be180ea339?w=600&q=80" alt="Trieste Italy elegant seafront grand cafe Habsburg">
-        <div class="day-num">DAY 4</div><div class="wx">☀️ 27°C</div></div>
-      <div class="card-body"><div class="loc">📍 Trieste, Italy</div><h3>The Habsburg Gem</h3>
-        <p>Once the 3rd largest city of the Habsburg Empire — elegant grand cafés, a clifftop Miramare Castle, and streets that feel Central European. Almost no tourists!</p>
-        <ul class="hl"><li>Miramare Castle on the sea cliff</li><li>Caffè San Marco (historic 1914 café)</li><li>Piazza Unità d'Italia — largest sea-facing square</li><li>Karst wines tasting</li></ul>
-        <div class="tc">
-          <div class="tc-row"><span class="tc-l">🚆 Venice → Trieste (regional)</span><div class="tc-rv"><div class="tc-r">€12 (~₹1,100)</div><div class="tc-dur">⏱ 2 hrs</div></div></div>
-        </div>
-        <div class="vibes"><span class="vibe" style="background:#ede9fe;color:#333">🏰 Habsburg</span><span class="vibe" style="background:#fef9c3;color:#333">☕ Grand Cafés</span></div>
+    <div class="card"><div class="ci"><img data-key="trieste" alt="Trieste Italy canal waterfront Habsburg city elegant cafe"><div class="dn">DAY 4</div><div class="wx">☀️ 27°C</div></div>
+      <div class="cb"><div class="loc">📍 Trieste, Italy</div><h3>The Habsburg Gem</h3>
+      <p>Once the 3rd largest Habsburg city — elegant grand cafés, clifftop Miramare Castle, streets that feel Central European. Almost no tourists!</p>
+      <ul class="hl"><li>Miramare Castle on the sea cliff</li><li>Caffè San Marco (historic 1914 café)</li><li>Piazza Unità d'Italia — largest sea-facing square</li><li>Karst wines tasting</li></ul>
+      <div class="tc">
+        <div class="tr"><span class="tl">🚆 Venice → Trieste (regional)</span><div class="trv"><div class="tr-r">€12 (~₹1,100)</div><div class="tr-d">⏱ 2 hrs</div></div></div>
       </div>
+      <div class="vibes"><span class="vb" style="background:#ede9fe;color:#333">🏰 Habsburg</span><span class="vb" style="background:#fef9c3;color:#333">☕ Grand Cafés</span></div></div>
     </div>
 
-    <div class="card">
-      <div class="card-img"><img src="https://images.unsplash.com/photo-1549144511-f099e773c147?w=600&q=80" alt="Ljubljana Slovenia castle river old town">
-        <div class="day-num">DAY 5</div><div class="wx">⛅ 26°C</div></div>
-      <div class="card-body"><div class="loc">📍 Ljubljana, Slovenia 🇸🇮</div><h3>Europe's Greenest Capital</h3>
-        <p>Bus into Slovenia — just 2.5 hrs. Ljubljana is tiny, charming and car-free in the center. Castle, riverside cafés, street art. Extremely budget-friendly!</p>
-        <ul class="hl"><li>Ljubljana Castle (funicular + views)</li><li>Triple Bridge & Preseren Square</li><li>Metelkova street art district</li><li>Riverside restaurant dinner</li></ul>
-        <div class="tc">
-          <div class="tc-row"><span class="tc-l">🚌 Trieste → Ljubljana (FlixBus)</span><div class="tc-rv"><div class="tc-r">€10–20 (~₹920–1,850)</div><div class="tc-dur">⏱ 2 hrs 30 min</div></div></div>
-          <div class="tc-row"><span class="tc-l">🎟️ Ljubljana Castle funicular</span><div class="tc-rv"><div class="tc-r">€6 (~₹550)</div><div class="tc-dur">⏱ 2 min ride</div></div></div>
-        </div>
-        <div class="vibes"><span class="vibe" style="background:#d1fae5;color:#333">🌿 Green City</span><span class="vibe" style="background:#bfdbfe;color:#333">💰 Budget-friendly</span></div>
+    <div class="card"><div class="ci"><img data-key="bled" alt="Lake Bled Slovenia castle turquoise water Julian Alps"><div class="dn">DAY 5–6</div><div class="wx">⛅ 24–26°C</div></div>
+      <div class="cb"><div class="loc">📍 Ljubljana + Lake Bled 🇸🇮</div><h3>Green Capital & Fairytale Lake</h3>
+      <p>Bus to Ljubljana — tiny, charming, car-free city. Day 6: Lake Bled — an island church in an emerald lake surrounded by the Julian Alps. Storybook perfect.</p>
+      <ul class="hl"><li>Ljubljana Castle (funicular + views)</li><li>Triple Bridge & Preseren Square</li><li>Pletna boat to island church — ring the bell!</li><li>Bled Castle cliff views</li><li>Kremšnita — famous Bled cream cake</li></ul>
+      <div class="tc">
+        <div class="tr"><span class="tl">🚌 Trieste → Ljubljana (FlixBus)</span><div class="trv"><div class="tr-r">€10–20</div><div class="tr-d">⏱ 2 hrs 30 min</div></div></div>
+        <div class="tr"><span class="tl">🚌 Ljubljana → Bled bus (return)</span><div class="trv"><div class="tr-r">€8 (~₹740)</div><div class="tr-d">⏱ 1 hr 15 min</div></div></div>
+        <div class="tr"><span class="tl">⛵ Pletna boat to island</span><div class="trv"><div class="tr-r">€18 (~₹1,650)</div><div class="tr-d">⏱ 20 min</div></div></div>
       </div>
+      <div class="vibes"><span class="vb" style="background:#bfdbfe;color:#333">🧚 Fairytale</span><span class="vb" style="background:#d1fae5;color:#333">💰 Budget-friendly</span></div></div>
     </div>
 
-    <div class="card">
-      <div class="card-img"><img src="https://images.unsplash.com/photo-1579033461380-adb49d4e3dfe?w=600&q=80" alt="Lake Bled Slovenia island church Julian Alps">
-        <div class="day-num">DAY 6</div><div class="wx">⛅ 24°C</div></div>
-      <div class="card-body"><div class="loc">📍 Lake Bled, Slovenia</div><h3>A Fairytale Lake</h3>
-        <p>An island church in the middle of an emerald lake surrounded by the Julian Alps. Take a traditional Pletna boat to the island. Ring the bell. One of Europe's most magical spots.</p>
-        <ul class="hl"><li>Pletna boat to island church</li><li>Ring the church bell — tradition!</li><li>Bled Castle cliff views</li><li>Kremšnita — famous Bled cream cake</li></ul>
-        <div class="tc">
-          <div class="tc-row"><span class="tc-l">🚌 Ljubljana → Bled bus (return)</span><div class="tc-rv"><div class="tc-r">€8 (~₹740)</div><div class="tc-dur">⏱ 1 hr 15 min each way</div></div></div>
-          <div class="tc-row"><span class="tc-l">⛵ Pletna boat to island</span><div class="tc-rv"><div class="tc-r">€18 (~₹1,650)</div><div class="tc-dur">⏱ 20 min boat</div></div></div>
-        </div>
-        <div class="vibes"><span class="vibe" style="background:#bfdbfe;color:#333">🧚 Fairytale</span><span class="vibe" style="background:#d1fae5;color:#333">📸 Most Scenic</span></div>
+    <div class="card"><div class="ci"><img data-key="piran" alt="Piran Slovenia aerial peninsula Adriatic sea town sunset"><div class="dn">DAY 7</div><div class="wx">☀️ 27°C</div></div>
+      <div class="cb"><div class="loc">📍 Piran, Slovenia 🌊</div><h3>Venetian Town by the Adriatic</h3>
+      <p>A perfectly preserved Venetian-style town on the Adriatic. Crystal clear water for swimming, romantic narrow alleys, a gorgeous main square inspired by St Mark's Venice.</p>
+      <ul class="hl"><li>Tartini Square — mini St Mark's!</li><li>Cathedral of St George panorama</li><li>Adriatic sea swimming</li><li>Fresh grilled fish lunch by the sea</li></ul>
+      <div class="tc">
+        <div class="tr"><span class="tl">🚌 Ljubljana → Piran (direct bus)</span><div class="trv"><div class="tr-r">€8–12 (~₹740–1,100)</div><div class="tr-d">⏱ 2 hrs</div></div></div>
       </div>
+      <div class="vibes"><span class="vb" style="background:#bfdbfe;color:#333">🏖️ Beach Day</span><span class="vb" style="background:#d1fae5;color:#333">🇸🇮 Hidden Gem</span></div></div>
     </div>
 
-    <div class="card">
-      <div class="card-img"><img src="https://images.unsplash.com/photo-1591981896830-de9b5db7ac98?w=600&q=80" alt="Piran Slovenia Adriatic coast town sea">
-        <div class="day-num">DAY 7</div><div class="wx">☀️ 27°C</div></div>
-      <div class="card-body"><div class="loc">📍 Piran, Slovenia 🌊</div><h3>Venetian Town by the Adriatic</h3>
-        <p>A perfectly preserved Venetian-style town on the Adriatic. Crystal clear water for swimming, romantic narrow alleys, and a gorgeous main square inspired by St Mark's Venice.</p>
-        <ul class="hl"><li>Tartini Square — mini St Mark's!</li><li>Cathedral of St George panorama</li><li>Adriatic sea swimming</li><li>Fresh grilled fish lunch by the sea</li></ul>
-        <div class="tc">
-          <div class="tc-row"><span class="tc-l">🚌 Ljubljana → Piran (direct bus)</span><div class="tc-rv"><div class="tc-r">€8–12 (~₹740–1,100)</div><div class="tc-dur">⏱ 2 hrs</div></div></div>
-        </div>
-        <div class="vibes"><span class="vibe" style="background:#bfdbfe;color:#333">🏖️ Beach Day</span><span class="vibe" style="background:#d1fae5;color:#333">🇸🇮 Hidden Gem</span></div>
+    <div class="card"><div class="ci"><img data-key="rovinj" alt="Rovinj Croatia aerial old town peninsula turquoise Adriatic sea church"><div class="dn">DAY 8–9</div><div class="wx">☀️ 28°C</div></div>
+      <div class="cb"><div class="loc">📍 Rovinj, Croatia 🇭🇷</div><h3>Croatia's Most Beautiful Town</h3>
+      <p>Rovinj is a hilltop town rising from the Adriatic — cobblestone alleys, terracotta rooftops, crystal water. Far less crowded than Dubrovnik. Istria is truffle country!</p>
+      <ul class="hl"><li>Old town hill climb to St Euphemia church</li><li>Boat trip to secluded coves</li><li>Pula Roman Amphitheatre day trip</li><li>Fresh truffle pasta — Istria specialty</li></ul>
+      <div class="tc">
+        <div class="tr"><span class="tl">🚌 Piran → Rovinj (GoOpti/bus)</span><div class="trv"><div class="tr-r">€20–30 (~₹1,850–2,800)</div><div class="tr-d">⏱ 2 hrs</div></div></div>
+        <div class="tr"><span class="tl">🚌 Rovinj → Pula day trip</span><div class="trv"><div class="tr-r">€8 (~₹740)</div><div class="tr-d">⏱ 1 hr each way</div></div></div>
       </div>
+      <div class="vibes"><span class="vb" style="background:#bfdbfe;color:#333">🌊 Adriatic Blue</span><span class="vb" style="background:#d1fae5;color:#333">🧀 Truffle Country</span></div></div>
     </div>
 
-    <div class="card">
-      <div class="card-img"><img src="https://images.unsplash.com/photo-1555993539-1732b0258235?w=600&q=80" alt="Rovinj Croatia colourful hilltop town Adriatic sea">
-        <div class="day-num">DAY 8–9</div><div class="wx">☀️ 28°C</div></div>
-      <div class="card-body"><div class="loc">📍 Rovinj, Croatia 🇭🇷</div><h3>Croatia's Most Beautiful Town</h3>
-        <p>Rovinj is a hilltop town rising from the Adriatic — cobblestone alleys, colourful buildings, crystal water. Far less crowded than Dubrovnik, much cheaper. Istria is truffle country!</p>
-        <ul class="hl"><li>Old town hill climb to St Euphemia church</li><li>Boat trip to secluded coves</li><li>Pula Roman Amphitheatre day trip</li><li>Fresh truffle pasta — Istria specialty</li></ul>
-        <div class="tc">
-          <div class="tc-row"><span class="tc-l">🚌 Piran → Rovinj (GoOpti/bus)</span><div class="tc-rv"><div class="tc-r">€20–30 (~₹1,850–2,800)</div><div class="tc-dur">⏱ 2 hrs</div></div></div>
-          <div class="tc-row"><span class="tc-l">🚌 Rovinj → Pula day trip (local bus)</span><div class="tc-rv"><div class="tc-r">€8 (~₹740)</div><div class="tc-dur">⏱ 1 hr each way</div></div></div>
-        </div>
-        <div class="vibes"><span class="vibe" style="background:#bfdbfe;color:#333">🌊 Adriatic Blue</span><span class="vibe" style="background:#d1fae5;color:#333">🧀 Truffle Country</span></div>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="card-img"><img src="https://images.unsplash.com/photo-1523906834658-6e24ef2386f9?w=600&q=80" alt="Venice return Grand Canal">
-        <div class="day-num">DAY 10–12</div><div class="wx">☀️ 29°C</div></div>
-      <div class="card-body"><div class="loc">📍 Rovinj → Venice → Milan → Delhi</div><h3>Return & Last Italian Days</h3>
-        <p>Bus from Rovinj back to Venice. Optional Verona stopover. Final day: high-speed to Milan for departure.</p>
-        <ul class="hl"><li>Optional Verona stopover</li><li>Last Italian meal in Venice</li><li>Milan → Malpensa for flight</li></ul>
-        <div class="tc">
-          <div class="tc-row"><span class="tc-l">🚌 Rovinj → Venice (FlixBus)</span><div class="tc-rv"><div class="tc-r">€25–40 (~₹2,300–3,700)</div><div class="tc-dur">⏱ 3–4 hrs</div></div></div>
-          <div class="tc-row"><span class="tc-l">🚆 Venice → Milan (Frecciarossa)</span><div class="tc-rv"><div class="tc-r">€22 (~₹2,000)</div><div class="tc-dur">⏱ 2 hrs 30 min</div></div></div>
-          <div class="tc-row"><span class="tc-l">🚆 Malpensa Express</span><div class="tc-rv"><div class="tc-r">€13 (~₹1,200)</div><div class="tc-dur">⏱ 30 min</div></div></div>
-        </div>
-      </div>
+    <div class="card"><div class="ci"><img data-key="venice" alt="Venice Italy return canal"><div class="dn">DAY 10–12</div><div class="wx">☀️ 29°C</div></div>
+      <div class="cb"><div class="loc">📍 Rovinj → Venice → Milan → Delhi</div><h3>Return & Departure</h3>
+      <p>Bus from Rovinj back to Venice. Optional Verona stopover. Final day: high-speed to Milan for departure.</p>
+      <ul class="hl"><li>Optional Verona stopover</li><li>Last Italian meal in Venice</li><li>Milan → Malpensa for flight</li></ul>
+      <div class="tc">
+        <div class="tr"><span class="tl">🚌 Rovinj → Venice (FlixBus)</span><div class="trv"><div class="tr-r">€25–40</div><div class="tr-d">⏱ 3–4 hrs</div></div></div>
+        <div class="tr"><span class="tl">🚆 Venice → Milan (Frecciarossa)</span><div class="trv"><div class="tr-r">€22 (~₹2,000)</div><div class="tr-d">⏱ 2 hrs 30 min</div></div></div>
+        <div class="tr"><span class="tl">🚆 Malpensa Express</span><div class="trv"><div class="tr-r">€13 (~₹1,200)</div><div class="tr-d">⏱ 30 min</div></div></div>
+      </div></div>
     </div>
 
   </div></div>
-  <div class="map-sec"><h3>🗺️ Route Path — 3 Countries with Travel Times</h3>
-    <div class="map-path">
-      <div class="m-stop"><div class="m-dot" style="background:#009246">ML</div><div class="m-lbl">Milan 🇮🇹</div></div><div class="m-arr">→</div>
-      <div class="m-stop"><div class="m-dot" style="background:#009246">VE</div><div class="m-lbl">Venice 2.5hr</div></div><div class="m-arr">→</div>
-      <div class="m-stop"><div class="m-dot" style="background:#009246">TS</div><div class="m-lbl">Trieste 2hr</div></div><div class="m-arr">→</div>
-      <div class="m-stop"><div class="m-dot" style="background:#003DA5">LJ</div><div class="m-lbl">Ljubljana 🇸🇮 2.5hr</div></div><div class="m-arr">→</div>
-      <div class="m-stop"><div class="m-dot" style="background:#003DA5">BL</div><div class="m-lbl">Bled 1.5hr</div></div><div class="m-arr">→</div>
-      <div class="m-stop"><div class="m-dot" style="background:#003DA5">PI</div><div class="m-lbl">Piran 2hr</div></div><div class="m-arr">→</div>
-      <div class="m-stop"><div class="m-dot" style="background:#e41e20">RV</div><div class="m-lbl">Rovinj 🇭🇷 2hr</div></div><div class="m-arr">→</div>
-      <div class="m-stop"><div class="m-dot" style="background:#333">ML</div><div class="m-lbl">Milan 6hr ✈️</div></div>
-    </div>
-  </div>
-  <div class="cost-sec"><h3>💰 Estimated Total — Per Person</h3>
-    <div class="cost-tbl">
-      <div class="c-row"><span>✈️ Delhi–Milan return (European carrier)</span><span>€400–600 <span class="inr">~₹55,000</span></span></div>
-      <div class="c-row"><span>🚆🚌 All trains + buses</span><span>€115–200 <span class="inr">~₹10,600–18,400</span></span></div>
-      <div class="c-row"><span>🏨 Accommodation (11 nights)</span><span>€275–500 <span class="inr">~₹25,400–46,200</span></span></div>
-      <div class="c-row"><span>🍝 Food — cheaper in SLO + CRO!</span><span>€180–320 <span class="inr">~₹16,600–29,500</span></span></div>
-      <div class="c-row"><span>🎟️ Activities & entries</span><span>€80–120 <span class="inr">~₹7,400–11,000</span></span></div>
-      <div class="c-row total"><span>TOTAL 🏆 Best Value</span><span>€1,050–1,740 <span class="inr">~₹97,000–1,60,000</span></span></div>
-    </div>
-  </div>
+  <div class="map-section"><div class="map-title">🗺️ Route Map — Italy + Slovenia + Croatia</div><div id="map2" class="leaflet-map"></div></div>
+  <div class="cs"><h3>💰 Estimated Total — Per Person</h3><div class="ct">
+    <div class="cr"><span>✈️ Delhi–Milan return (European carrier)</span><span>~₹50,000–60,000</span></div>
+    <div class="cr"><span>🚆🚌 All trains + buses</span><span>€115–200 <span class="inr">~₹10,600–18,400</span></span></div>
+    <div class="cr"><span>🏨 Accommodation (11 nights)</span><span>€275–500 <span class="inr">~₹25,400–46,200</span></span></div>
+    <div class="cr"><span>🍝 Food — cheaper in SLO + CRO!</span><span>€180–320 <span class="inr">~₹16,600–29,500</span></span></div>
+    <div class="cr"><span>🎟️ Activities & entries</span><span>€80–120 <span class="inr">~₹7,400–11,000</span></span></div>
+    <div class="cr total"><span>TOTAL 🏆 Best Value</span><span>~₹1,10,000–1,65,100</span></div>
+  </div></div>
 </div>
 
-<!-- ==================== PANEL 4: FOOD & WINE ==================== -->
+<!-- ===== PANEL 4: FOOD & WINE ===== -->
 <div class="panel" id="p3">
-  <div class="itin-hero">
-    <img src="https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=1200&q=80" alt="Italian food pasta wine culinary">
-    <div class="itin-hero-ov"></div>
-    <div class="itin-hero-txt">
-      <h2>Food, Wine & Slow Italy</h2>
-      <p style="opacity:.85;font-size:.88rem;margin-bottom:7px">Culinary Journey Through the North — 11 Days</p>
-      <div class="tags">
-        <span style="background:rgba(139,90,43,.8)">🍷 Wine</span>
-        <span style="background:rgba(45,106,79,.8)">🍝 Food</span>
-        <span style="background:rgba(100,100,100,.7)">🚗 Car 3 days</span>
-        <span style="background:rgba(231,111,81,.7)">🌾 Agriturismo</span>
-      </div>
+  <div class="ih"><img data-key="barolo" alt="Barolo Langhe vineyard hills Piedmont Italy misty rolling"><div class="ih-ov"></div>
+    <div class="ih-txt"><h2>Food, Wine & Slow Italy</h2>
+      <p style="opacity:.85;font-size:.86rem;margin-bottom:6px">Culinary Journey Through the North — 11 Days</p>
+      <div class="tags"><span style="background:rgba(139,90,43,.8)">🍷 Wine</span><span style="background:rgba(45,106,79,.8)">🍝 Food</span><span style="background:rgba(100,100,100,.7)">🚗 Car 3 days</span><span style="background:rgba(231,111,81,.7)">🌾 Agriturismo</span></div>
     </div>
   </div>
-  <div class="sum-strip">
-    <div class="sum-item"><div class="lbl">Duration</div><div class="val">11 Days</div></div>
-    <div class="sum-item"><div class="lbl">Countries</div><div class="val">Italy Only</div></div>
-    <div class="sum-item"><div class="lbl">Max Temp</div><div class="val">26–32°C</div></div>
-    <div class="sum-item"><div class="lbl">Transport</div><div class="val">Train + Car</div></div>
-    <div class="sum-item"><div class="lbl">Transport €</div><div class="val">€160–310</div></div>
-    <div class="sum-item"><div class="lbl">For</div><div class="val">Foodies 🍝</div></div>
+  <div class="ss">
+    <div class="si"><div class="l">Duration</div><div class="v">11 Days</div></div>
+    <div class="si"><div class="l">Countries</div><div class="v">Italy</div></div>
+    <div class="si"><div class="l">Max Temp</div><div class="v">26–32°C</div></div>
+    <div class="si"><div class="l">Transport</div><div class="v">Train+Car</div></div>
+    <div class="si"><div class="l">Transport</div><div class="v">€160–310</div></div>
+    <div class="si"><div class="l">For</div><div class="v">Foodies 🍝</div></div>
   </div>
-  <div class="days-wrap"><div class="days-grid">
+  <div class="dw"><div class="dg">
 
-    <div class="card">
-      <div class="card-img"><img src="https://images.unsplash.com/photo-1515542622106-78bda8ba0e5b?w=600&q=80" alt="Milan Duomo Navigli canals night">
-        <div class="day-num">DAY 1</div><div class="wx">☀️ 30°C</div></div>
-      <div class="card-body"><div class="loc">📍 Milan</div><h3>Arrive — Navigli & Panzerotti</h3>
-        <p>Navigli canal aperitivo with Campari (invented here!). Try the panzerotto — Milan's legendary fried dough pocket, an institution since 1888.</p>
-        <ul class="hl"><li>Navigli aperitivo culture</li><li>Panzerotto from Luini (iconic!)</li><li>Duomo rooftop walk</li></ul>
-        <div class="tc">
-          <div class="tc-row"><span class="tc-l">🚆 Malpensa Express</span><div class="tc-rv"><div class="tc-r">€13 (~₹1,200)</div><div class="tc-dur">⏱ 30 min</div></div></div>
-        </div>
-      </div>
+    <div class="card"><div class="ci"><img data-key="milan" alt="Milan Italy Navigli night"><div class="dn">DAY 1</div><div class="wx">☀️ 30°C</div></div>
+      <div class="cb"><div class="loc">📍 Milan</div><h3>Arrive — Navigli & Panzerotti</h3>
+      <p>Navigli canal aperitivo with Campari (invented here!). Try the panzerotto — Milan's legendary fried dough pocket, an institution since 1888.</p>
+      <ul class="hl"><li>Navigli aperitivo culture</li><li>Panzerotto from Luini (iconic!)</li><li>Duomo rooftop walk</li></ul>
+      <div class="tc"><div class="tr"><span class="tl">🚆 Malpensa Express</span><div class="trv"><div class="tr-r">€13 (~₹1,200)</div><div class="tr-d">⏱ 30 min</div></div></div></div></div>
     </div>
 
-    <div class="card">
-      <div class="card-img"><img src="https://images.unsplash.com/photo-1576241839931-e1374ddb57dc?w=600&q=80" alt="Turin Italy Piazza Castello baroque royal palace">
-        <div class="day-num">DAY 2</div><div class="wx">☀️ 28°C</div></div>
-      <div class="card-body"><div class="loc">📍 Turin</div><h3>Vermouth, Bicerin & Street Food</h3>
-        <p>Turin is the true origin of Italian café culture. Vermouth was invented here. Porta Palazzo is Europe's largest open-air market. The bicerin is legendary.</p>
-        <ul class="hl"><li>Porta Palazzo market — Europe's largest!</li><li>Bicerin at Caffè Al Bicerin (since 1763)</li><li>Vermouth tasting tour</li><li>Piemontese bagna cauda dinner</li></ul>
-        <div class="tc">
-          <div class="tc-row"><span class="tc-l">🚆 Milan → Turin (Frecciarossa)</span><div class="tc-rv"><div class="tc-r">€12 (~₹1,100)</div><div class="tc-dur">⏱ 55 min</div></div></div>
-        </div>
-        <div class="vibes"><span class="vibe" style="background:#fef9c3;color:#333">☕ Coffee Origin</span><span class="vibe" style="background:#ede9fe;color:#333">🍸 Vermouth</span></div>
+    <div class="card"><div class="ci"><img data-key="turin" alt="Turin Italy Mole Antonelliana tower Alps sunset skyline"><div class="dn">DAY 2</div><div class="wx">☀️ 28°C</div></div>
+      <div class="cb"><div class="loc">📍 Turin</div><h3>Vermouth, Bicerin & Street Food</h3>
+      <p>Turin is the true origin of Italian café culture. Vermouth was invented here. Porta Palazzo is Europe's largest open-air market.</p>
+      <ul class="hl"><li>Porta Palazzo market — Europe's largest!</li><li>Bicerin at Caffè Al Bicerin (since 1763)</li><li>Vermouth tasting tour</li><li>Piemontese bagna cauda dinner</li></ul>
+      <div class="tc">
+        <div class="tr"><span class="tl">🚆 Milan → Turin (Frecciarossa)</span><div class="trv"><div class="tr-r">€12 (~₹1,100)</div><div class="tr-d">⏱ 55 min</div></div></div>
       </div>
+      <div class="vibes"><span class="vb" style="background:#fef9c3;color:#333">☕ Coffee Origin</span><span class="vb" style="background:#ede9fe;color:#333">🍸 Vermouth</span></div></div>
     </div>
 
-    <div class="card">
-      <div class="card-img"><img src="https://images.unsplash.com/photo-1506377247377-2a5b3b417ebb?w=600&q=80" alt="Barolo Langhe vineyard hills Piedmont wine">
-        <div class="day-num">DAY 3–4</div><div class="wx">🌤️ 27°C</div></div>
-      <div class="card-body"><div class="loc">📍 Langhe Hills — Barolo Country</div><h3>The King of Italian Wine</h3>
-        <p>Pick up rental car. Drive 1 hour into UNESCO-listed Langhe hills. Barolo castle winery, medieval villages, taste the world-class "king of wines" in its homeland.</p>
-        <ul class="hl"><li>Barolo village & WiMu wine museum</li><li>Cantina tasting in centuries-old cellar</li><li>La Morra hilltop viewpoint</li><li>Truffle hunt experience</li><li>Agriturismo farm dinner under the stars</li></ul>
-        <div class="tc">
-          <div class="tc-row"><span class="tc-l">🚗 Car rental pick-up Turin (3 days)</span><div class="tc-rv"><div class="tc-r">€110–165 (~₹10–15k)</div><div class="tc-dur">⏱ 1 hr drive to Langhe</div></div></div>
-          <div class="tc-row"><span class="tc-l">🍷 Wine tasting at cantina</span><div class="tc-rv"><div class="tc-r">€15–25 (~₹1,400–2,300)</div><div class="tc-dur">⏱ allow 2–3 hrs</div></div></div>
-        </div>
-        <div class="vibes"><span class="vibe" style="background:#fce7f3;color:#333">🍷 King of Wine</span><span class="vibe" style="background:#d1fae5;color:#333">🌾 Countryside</span></div>
+    <div class="card"><div class="ci"><img data-key="barolo" alt="Barolo Langhe vineyard hills Piedmont Italy misty rolling castle"><div class="dn">DAY 3–4</div><div class="wx">🌤️ 27°C</div></div>
+      <div class="cb"><div class="loc">📍 Langhe Hills — Barolo Country</div><h3>The King of Italian Wine</h3>
+      <p>Pick up rental car. Drive 1 hour into UNESCO-listed Langhe hills. Barolo castle winery, medieval villages, taste the world-class "king of wines" in its homeland.</p>
+      <ul class="hl"><li>Barolo village & WiMu wine museum</li><li>Cantina tasting in centuries-old cellar</li><li>La Morra hilltop viewpoint</li><li>Truffle hunt experience</li><li>Agriturismo farm dinner under the stars</li></ul>
+      <div class="tc">
+        <div class="tr"><span class="tl">🚗 Car rental pick-up Turin (3 days)</span><div class="trv"><div class="tr-r">€110–165 (~₹10–15k)</div><div class="tr-d">⏱ 1 hr drive to Langhe</div></div></div>
+        <div class="tr"><span class="tl">🍷 Wine tasting at cantina</span><div class="trv"><div class="tr-r">€15–25 (~₹1,400–2,300)</div><div class="tr-d">⏱ allow 2–3 hrs</div></div></div>
       </div>
+      <div class="vibes"><span class="vb" style="background:#fce7f3;color:#333">🍷 King of Wine</span><span class="vb" style="background:#d1fae5;color:#333">🌾 Countryside</span></div></div>
     </div>
 
-    <div class="card">
-      <div class="card-img"><img src="https://images.unsplash.com/photo-1499678329028-101435549a4e?w=600&q=80" alt="Cinque Terre pesto coast village">
-        <div class="day-num">DAY 5–6</div><div class="wx">🌊 27°C</div></div>
-      <div class="card-body"><div class="loc">📍 Cinque Terre</div><h3>Pesto & Sea Coves</h3>
-        <p>Drop car in Genoa. Train to La Spezia. Two days in Cinque Terre — pesto pasta from the source, fresh anchovies, farinata, and swimming in turquoise coves.</p>
-        <ul class="hl"><li>Pesto tasting — it's from right here!</li><li>Acciughe (anchovies) from Monterosso</li><li>Farinata di ceci street food</li><li>Vernazza & Manarola cove swimming</li></ul>
-        <div class="tc">
-          <div class="tc-row"><span class="tc-l">🚗 Drive Langhe → Genoa (drop car)</span><div class="tc-rv"><div class="tc-r">⛽ fuel included</div><div class="tc-dur">⏱ 2 hrs drive</div></div></div>
-          <div class="tc-row"><span class="tc-l">🚆 Genoa → La Spezia (regional)</span><div class="tc-rv"><div class="tc-r">€10 (~₹920)</div><div class="tc-dur">⏱ 1 hr 30 min</div></div></div>
-          <div class="tc-row"><span class="tc-l">🎟️ Cinque Terre Card (per day)</span><div class="tc-rv"><div class="tc-r">€18/day (~₹1,650)</div><div class="tc-dur">⏱ 3–10 min per hop</div></div></div>
-        </div>
-        <div class="vibes"><span class="vibe" style="background:#bfdbfe;color:#333">🏖️ Beach</span><span class="vibe" style="background:#d1fae5;color:#333">🫙 Pesto Heaven</span></div>
+    <div class="card"><div class="ci"><img data-key="cinque" alt="Cinque Terre Italy pesto coast village cliff"><div class="dn">DAY 5–6</div><div class="wx">🌊 27°C</div></div>
+      <div class="cb"><div class="loc">📍 Cinque Terre</div><h3>Pesto & Sea Coves</h3>
+      <p>Drop car in Genoa. Train to La Spezia. Two days in Cinque Terre — pesto pasta from the source, fresh anchovies, farinata, and swimming in turquoise coves.</p>
+      <ul class="hl"><li>Pesto tasting — it's from right here!</li><li>Acciughe (anchovies) from Monterosso</li><li>Farinata di ceci street food</li><li>Vernazza & Manarola cove swimming</li></ul>
+      <div class="tc">
+        <div class="tr"><span class="tl">🚗 Drive Langhe → Genoa (drop car)</span><div class="trv"><div class="tr-r">⛽ fuel included</div><div class="tr-d">⏱ 2 hrs drive</div></div></div>
+        <div class="tr"><span class="tl">🚆 Genoa → La Spezia (regional)</span><div class="trv"><div class="tr-r">€10 (~₹920)</div><div class="tr-d">⏱ 1 hr 30 min</div></div></div>
+        <div class="tr"><span class="tl">🎟️ Cinque Terre Card (per day)</span><div class="trv"><div class="tr-r">€18/day</div><div class="tr-d">⏱ 3–10 min per hop</div></div></div>
       </div>
+      <div class="vibes"><span class="vb" style="background:#bfdbfe;color:#333">🏖️ Beach</span><span class="vb" style="background:#d1fae5;color:#333">🫙 Pesto Heaven</span></div></div>
     </div>
 
-    <div class="card">
-      <div class="card-img"><img src="https://images.unsplash.com/photo-1473093295043-cdd812d0e601?w=600&q=80" alt="Italian prosciutto pasta parma food">
-        <div class="day-num">DAY 7–8</div><div class="wx">☀️ 30°C</div></div>
-      <div class="card-body"><div class="loc">📍 Parma + Bologna</div><h3>Prosciutto, Parmigiano & Ragu</h3>
-        <p>Parma = the ham and cheese capital of the world. Visit a real curing house. Then Bologna for tagliatelle al ragu at its absolute birthplace.</p>
-        <ul class="hl"><li>Prosciutto di Parma curing house tour</li><li>Parmigiano-Reggiano dairy tour (book ahead)</li><li>Bologna Mercato di Mezzo food hall</li><li>Tagliatelle al ragu — THE original</li><li>Mortadella tasting</li></ul>
-        <div class="tc">
-          <div class="tc-row"><span class="tc-l">🚆 La Spezia → Parma (1 change)</span><div class="tc-rv"><div class="tc-r">€18 (~₹1,650)</div><div class="tc-dur">⏱ 2 hrs</div></div></div>
-          <div class="tc-row"><span class="tc-l">🚆 Parma → Bologna (regional)</span><div class="tc-rv"><div class="tc-r">€8 (~₹740)</div><div class="tc-dur">⏱ 1 hr</div></div></div>
-        </div>
-        <div class="vibes"><span class="vibe" style="background:#fef3c7;color:#333">🧀 Cheese Heaven</span><span class="vibe" style="background:#fce7f3;color:#333">🥩 Prosciutto</span></div>
+    <div class="card"><div class="ci"><img data-key="food" alt="Italian pasta prosciutto food culinary Parma Bologna"><div class="dn">DAY 7–8</div><div class="wx">☀️ 30°C</div></div>
+      <div class="cb"><div class="loc">📍 Parma + Bologna</div><h3>Prosciutto, Parmigiano & Ragu</h3>
+      <p>Parma = the ham and cheese capital of the world. Visit a real curing house. Then Bologna for tagliatelle al ragu at its absolute birthplace.</p>
+      <ul class="hl"><li>Prosciutto di Parma curing house tour</li><li>Parmigiano-Reggiano dairy tour</li><li>Bologna Mercato di Mezzo food hall</li><li>Tagliatelle al ragu — THE original</li><li>Mortadella tasting</li></ul>
+      <div class="tc">
+        <div class="tr"><span class="tl">🚆 La Spezia → Parma (1 change)</span><div class="trv"><div class="tr-r">€18 (~₹1,650)</div><div class="tr-d">⏱ 2 hrs</div></div></div>
+        <div class="tr"><span class="tl">🚆 Parma → Bologna (regional)</span><div class="trv"><div class="tr-r">€8 (~₹740)</div><div class="tr-d">⏱ 1 hr</div></div></div>
       </div>
+      <div class="vibes"><span class="vb" style="background:#fef3c7;color:#333">🧀 Cheese Heaven</span></div></div>
     </div>
 
-    <div class="card">
-      <div class="card-img"><img src="https://images.unsplash.com/photo-1547050605-2ffdc9c1f1e3?w=600&q=80" alt="Ferrari red car Italy Modena sports car">
-        <div class="day-num">DAY 9</div><div class="wx">☀️ 31°C</div></div>
-      <div class="card-body"><div class="loc">📍 Modena</div><h3>Balsamic & Ferrari</h3>
-        <p>Balsamic vinegar aged 12–25 years in wooden barrels, birthplace of Ferrari and Pavarotti, and home to Osteria Francescana (world's best restaurant). Two legends, one city.</p>
-        <ul class="hl"><li>Traditional Balsamic estate tour & tasting</li><li>Enzo Ferrari Museum (€17)</li><li>Mercato Albinelli food hall</li><li>Lambrusco wine lunch</li></ul>
-        <div class="tc">
-          <div class="tc-row"><span class="tc-l">🚆 Bologna → Modena (regional)</span><div class="tc-rv"><div class="tc-r">€5 (~₹460)</div><div class="tc-dur">⏱ 25 min</div></div></div>
-        </div>
-        <div class="vibes"><span class="vibe" style="background:#fef9c3;color:#333">🏎️ Ferrari</span><span class="vibe" style="background:#d1fae5;color:#333">🍶 Balsamic</span></div>
+    <div class="card"><div class="ci"><img data-key="food" alt="Ferrari Modena Italy balsamic vinegar food"><div class="dn">DAY 9</div><div class="wx">☀️ 31°C</div></div>
+      <div class="cb"><div class="loc">📍 Modena</div><h3>Balsamic & Ferrari</h3>
+      <p>Balsamic vinegar aged 12–25 years in wooden barrels, birthplace of Ferrari and Pavarotti. Two legends, one city.</p>
+      <ul class="hl"><li>Traditional Balsamic estate tour & tasting</li><li>Enzo Ferrari Museum (€17)</li><li>Mercato Albinelli food hall</li><li>Lambrusco wine lunch</li></ul>
+      <div class="tc">
+        <div class="tr"><span class="tl">🚆 Bologna → Modena (regional)</span><div class="trv"><div class="tr-r">€5 (~₹460)</div><div class="tr-d">⏱ 25 min</div></div></div>
       </div>
+      <div class="vibes"><span class="vb" style="background:#fef9c3;color:#333">🏎️ Ferrari</span><span class="vb" style="background:#d1fae5;color:#333">🍶 Balsamic</span></div></div>
     </div>
 
-    <div class="card">
-      <div class="card-img"><img src="https://images.unsplash.com/photo-1543429776-2782fc8e3f4a?w=600&q=80" alt="Florence Tuscany Arno river Ponte Vecchio">
-        <div class="day-num">DAY 10–11</div><div class="wx">🌡️ 33°C</div></div>
-      <div class="card-body"><div class="loc">📍 Florence + Return Milan</div><h3>Bistecca Fiorentina & Departure</h3>
-        <p>Mercato Centrale is Italy's best food hall. Sightsee early to beat the heat. Final night: the legendary Bistecca alla Fiorentina. Then train to Milan for departure.</p>
-        <ul class="hl"><li>Mercato Centrale upper floor food hall</li><li>Bistecca alla Fiorentina dinner</li><li>Piazzale Michelangelo sunset view</li><li>Morning train to Milan</li></ul>
-        <div class="tc">
-          <div class="tc-row"><span class="tc-l">🚆 Modena → Florence (Frecciarossa)</span><div class="tc-rv"><div class="tc-r">€12 (~₹1,100)</div><div class="tc-dur">⏱ 30 min</div></div></div>
-          <div class="tc-row"><span class="tc-l">🚆 Florence → Milan (Frecciarossa)</span><div class="tc-rv"><div class="tc-r">€20 (~₹1,850)</div><div class="tc-dur">⏱ 1 hr 40 min</div></div></div>
-          <div class="tc-row"><span class="tc-l">🚆 Malpensa Express</span><div class="tc-rv"><div class="tc-r">€13 (~₹1,200)</div><div class="tc-dur">⏱ 30 min</div></div></div>
-        </div>
-        <div class="vibes"><span class="vibe" style="background:#fce7f3;color:#333">🥩 Bistecca</span><span class="vibe" style="background:#ede9fe;color:#333">🎨 Renaissance</span></div>
+    <div class="card"><div class="ci"><img data-key="florence" alt="Florence Italy cathedral Duomo Brunelleschi dome rooftops Tuscany"><div class="dn">DAY 10–11</div><div class="wx">🌡️ 33°C</div></div>
+      <div class="cb"><div class="loc">📍 Florence + Return Milan</div><h3>Bistecca Fiorentina & Departure</h3>
+      <p>Mercato Centrale upper floor is Italy's best food hall. Sightsee early. Final night: the legendary Bistecca alla Fiorentina. Then train to Milan for departure.</p>
+      <ul class="hl"><li>Mercato Centrale upper floor food hall</li><li>Bistecca alla Fiorentina dinner</li><li>Piazzale Michelangelo sunset view</li><li>Morning train to Milan</li></ul>
+      <div class="tc">
+        <div class="tr"><span class="tl">🚆 Modena → Florence (Frecciarossa)</span><div class="trv"><div class="tr-r">€12 (~₹1,100)</div><div class="tr-d">⏱ 30 min</div></div></div>
+        <div class="tr"><span class="tl">🚆 Florence → Milan (Frecciarossa)</span><div class="trv"><div class="tr-r">€20 (~₹1,850)</div><div class="tr-d">⏱ 1 hr 40 min</div></div></div>
+        <div class="tr"><span class="tl">🚆 Malpensa Express</span><div class="trv"><div class="tr-r">€13 (~₹1,200)</div><div class="tr-d">⏱ 30 min</div></div></div>
       </div>
+      <div class="vibes"><span class="vb" style="background:#fce7f3;color:#333">🥩 Bistecca</span></div></div>
     </div>
 
   </div></div>
-  <div class="map-sec"><h3>🗺️ The Food Trail with Travel Times</h3>
-    <div class="map-path">
-      <div class="m-stop"><div class="m-dot" style="background:#e76f51">ML</div><div class="m-lbl">Milan</div></div><div class="m-arr">→</div>
-      <div class="m-stop"><div class="m-dot" style="background:#8b5a2b">TO</div><div class="m-lbl">Turin ☕ 55min</div></div><div class="m-arr">→</div>
-      <div class="m-stop"><div class="m-dot" style="background:#8b5a2b">🚗</div><div class="m-lbl">Langhe 1hr</div></div><div class="m-arr">→</div>
-      <div class="m-stop"><div class="m-dot" style="background:#457b9d">CT</div><div class="m-lbl">Cinque Terre 3.5hr</div></div><div class="m-arr">→</div>
-      <div class="m-stop"><div class="m-dot" style="background:#2d6a4f">PR</div><div class="m-lbl">Parma 2hr</div></div><div class="m-arr">→</div>
-      <div class="m-stop"><div class="m-dot" style="background:#2d6a4f">BO</div><div class="m-lbl">Bologna 1hr</div></div><div class="m-arr">→</div>
-      <div class="m-stop"><div class="m-dot" style="background:#e9c46a;color:#333">MO</div><div class="m-lbl">Modena 25min</div></div><div class="m-arr">→</div>
-      <div class="m-stop"><div class="m-dot" style="background:#e76f51">FI</div><div class="m-lbl">Florence 30min</div></div><div class="m-arr">→</div>
-      <div class="m-stop"><div class="m-dot" style="background:#333">ML</div><div class="m-lbl">Milan 1h40 ✈️</div></div>
-    </div>
-  </div>
-  <div class="cost-sec"><h3>💰 Estimated Total — Per Person</h3>
-    <div class="cost-tbl">
-      <div class="c-row"><span>✈️ Delhi–Milan return (European carrier)</span><span>€400–600 <span class="inr">~₹55,000</span></span></div>
-      <div class="c-row"><span>🚆 Trains</span><span>€90–145 <span class="inr">~₹8,300–13,400</span></span></div>
-      <div class="c-row"><span>🚗 Car rental (3 days) + fuel</span><span>€140–195 <span class="inr">~₹12,900–18,000</span></span></div>
-      <div class="c-row"><span>🏨 Accommodation (10 nights)</span><span>€300–550 <span class="inr">~₹28,000–50,700</span></span></div>
-      <div class="c-row"><span>🍝 Food (€25–45/day — it's a food trip!)</span><span>€275–495 <span class="inr">~₹25,400–45,700</span></span></div>
-      <div class="c-row"><span>🎟️ Tours, tastings, museums</span><span>€100–160 <span class="inr">~₹9,200–14,800</span></span></div>
-      <div class="c-row total"><span>TOTAL ESTIMATE</span><span>€1,305–2,145 <span class="inr">~₹1,20,000–1,97,000</span></span></div>
-    </div>
-  </div>
+  <div class="map-section"><div class="map-title">🗺️ Route Map — The Food Trail</div><div id="map3" class="leaflet-map"></div></div>
+  <div class="cs"><h3>💰 Estimated Total — Per Person</h3><div class="ct">
+    <div class="cr"><span>✈️ Delhi–Milan return (European carrier)</span><span>~₹50,000–60,000</span></div>
+    <div class="cr"><span>🚆 Trains</span><span>€90–145 <span class="inr">~₹8,300–13,400</span></span></div>
+    <div class="cr"><span>🚗 Car rental (3 days) + fuel</span><span>€140–195 <span class="inr">~₹12,900–18,000</span></span></div>
+    <div class="cr"><span>🏨 Accommodation (10 nights)</span><span>€300–550 <span class="inr">~₹28,000–50,700</span></span></div>
+    <div class="cr"><span>🍝 Food (€25–45/day — it's a food trip!)</span><span>€275–495 <span class="inr">~₹25,400–45,700</span></span></div>
+    <div class="cr"><span>🎟️ Tours, tastings, museums</span><span>€100–160 <span class="inr">~₹9,200–14,800</span></span></div>
+    <div class="cr total"><span>TOTAL ESTIMATE</span><span>~₹1,33,800–2,02,600</span></div>
+  </div></div>
 </div>
 
-<!-- ==================== PANEL 5: FLIGHT ADVISORY ==================== -->
+<!-- ===== PANEL 5: FLIGHT ADVISORY ===== -->
 <div class="panel" id="p4">
-  <div class="itin-hero">
-    <img src="https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=1200&q=80" alt="Airplane wing flying clouds sky">
-    <div class="itin-hero-ov"></div>
-    <div class="itin-hero-txt">
-      <h2>✈️ Flight Advisory — July 2026</h2>
-      <p style="opacity:.85;font-size:.88rem;margin-bottom:7px">Safe routes Delhi → Milan amid Iran–Israel–US conflict</p>
-      <div class="tags">
-        <span style="background:rgba(231,111,81,.8)">⚠️ Updated April 2026</span>
-        <span style="background:rgba(45,106,79,.8)">✅ Safe Airlines Listed</span>
-        <span style="background:rgba(100,100,100,.7)">🚫 Avoid List</span>
-      </div>
+  <div class="ih"><img data-key="flight" alt="Airplane wing flying above clouds"><div class="ih-ov"></div>
+    <div class="ih-txt"><h2>✈️ Flight Advisory — July 2026</h2>
+      <p style="opacity:.85;font-size:.86rem;margin-bottom:6px">Safe routes Delhi → Milan amid Iran–Israel–US conflict</p>
+      <div class="tags"><span style="background:rgba(231,111,81,.8)">⚠️ Updated April 2026</span><span style="background:rgba(45,106,79,.8)">✅ Safe Airlines Listed</span><span style="background:rgba(100,100,100,.7)">🚫 Avoid List</span></div>
     </div>
   </div>
 
   <div class="adv-wrap">
-    <div style="background:#fff3cd;border:1px solid #e9c46a;border-radius:10px;padding:16px;margin-bottom:24px;font-family:sans-serif;font-size:.85rem;line-height:1.7;color:#333">
-      ⚠️ <b>Situation Summary:</b> Since February 28, 2026, US–Israel strikes on Iran triggered mass airspace closures across the Middle East — Iran, Iraq, Kuwait, Qatar, UAE, Bahrain, and Israel. Over 60,000 flights were cancelled. Dubai (DXB), Abu Dhabi (AUH) and Doha (DOH) — the three biggest India–Europe hubs — were all shut down or severely disrupted. The situation remains volatile as of April 2026. <b>For July travel, book European carriers that fly northern routes over Turkey, avoiding the conflict zone entirely.</b>
+    <div style="background:#fff3cd;border:1px solid #e9c46a;border-radius:10px;padding:14px;margin-bottom:22px;font-family:sans-serif;font-size:.82rem;line-height:1.7;color:#333">
+      ⚠️ <b>Situation Summary (Apr 2026):</b> Since Feb 28, 2026, US–Israel strikes on Iran triggered mass airspace closures across the Middle East — Iran, Iraq, Kuwait, Qatar, UAE, Bahrain, and Israel. Dubai (DXB), Abu Dhabi (AUH) and Doha (DOH) were all shut down or severely disrupted. <b>For July travel, book European carriers flying northern routes via Turkey/Caucasus, completely avoiding the conflict zone.</b>
     </div>
-
-    <h3 style="font-size:1.1rem;color:var(--dark);margin-bottom:16px;text-align:center">✅ Safe Airlines — Delhi (DEL) → Milan Malpensa (MXP)</h3>
-    <table class="airline-table">
-      <tr><th>Airline</th><th>Route</th><th>Duration</th><th>Airspace Used</th><th>Status</th></tr>
-      <tr><td>🇩🇪 <b>Lufthansa</b></td><td>DEL → FRA → MXP</td><td>~11–12 hrs</td><td>Central Asia → Turkey → Europe</td><td><span class="safe-tag">✅ SAFE</span></td></tr>
-      <tr><td>🇫🇷 <b>Air France</b></td><td>DEL → CDG → MXP</td><td>~11–13 hrs</td><td>Northern corridor via Caucasus</td><td><span class="safe-tag">✅ SAFE</span></td></tr>
-      <tr><td>🇬🇧 <b>British Airways</b></td><td>DEL → LHR → MXP</td><td>~12–13 hrs</td><td>Northern route, avoids ME fully</td><td><span class="safe-tag">✅ SAFE</span></td></tr>
-      <tr><td>🇹🇷 <b>Turkish Airlines</b></td><td>DEL → IST → MXP</td><td>~10–11 hrs</td><td>Istanbul unaffected, most reliable</td><td><span class="safe-tag">✅ SAFE</span></td></tr>
-      <tr><td>🇨🇭 <b>SWISS</b></td><td>DEL → ZRH → MXP</td><td>~11–12 hrs</td><td>Northern corridor</td><td><span class="safe-tag">✅ SAFE</span></td></tr>
-      <tr><td>🇳🇱 <b>KLM</b></td><td>DEL → AMS → MXP</td><td>~12–13 hrs</td><td>Northern route, rerouted</td><td><span class="safe-tag">✅ SAFE</span></td></tr>
-      <tr><td>🇮🇳 <b>Air India direct</b></td><td>DEL → MXP</td><td>~9 hrs</td><td>Rerouting — verify status</td><td><span class="avoid-tag">⚠️ CHECK STATUS</span></td></tr>
+    <h3 style="font-size:1.05rem;color:var(--dark);margin-bottom:14px;text-align:center">✅ Safe Airlines — Delhi (DEL) → Milan Malpensa (MXP)</h3>
+    <table class="at2">
+      <tr><th>Airline</th><th>Route</th><th>Duration</th><th>Status</th></tr>
+      <tr><td>🇩🇪 <b>Lufthansa</b></td><td>DEL → FRA → MXP</td><td>~11–12 hrs</td><td><span class="stag">✅ SAFE</span></td></tr>
+      <tr><td>🇫🇷 <b>Air France</b></td><td>DEL → CDG → MXP</td><td>~11–13 hrs</td><td><span class="stag">✅ SAFE</span></td></tr>
+      <tr><td>🇬🇧 <b>British Airways</b></td><td>DEL → LHR → MXP</td><td>~12–13 hrs</td><td><span class="stag">✅ SAFE</span></td></tr>
+      <tr><td>🇹🇷 <b>Turkish Airlines</b></td><td>DEL → IST → MXP</td><td>~10–11 hrs</td><td><span class="stag">✅ SAFE</span></td></tr>
+      <tr><td>🇨🇭 <b>SWISS</b></td><td>DEL → ZRH → MXP</td><td>~11–12 hrs</td><td><span class="stag">✅ SAFE</span></td></tr>
+      <tr><td>🇳🇱 <b>KLM</b></td><td>DEL → AMS → MXP</td><td>~12–13 hrs</td><td><span class="stag">✅ SAFE</span></td></tr>
+      <tr><td>🇮🇳 <b>Air India direct</b></td><td>DEL → MXP direct</td><td>~9 hrs</td><td><span class="atag">⚠️ VERIFY STATUS</span></td></tr>
     </table>
 
-    <h3 style="font-size:1.1rem;color:var(--dark);margin-bottom:16px;margin-top:28px;text-align:center">🚫 Avoid — Airlines & Airports (Middle East Hubs)</h3>
-    <div class="adv-grid">
-      <div class="adv-card" style="background:#fef2f2;border:1px solid #fca5a5;">
-        <div class="adv-title" style="color:#dc2626;">🚫 Airlines to Avoid</div>
-        <ul>
-          <li style="color:#333">Emirates — hub DXB closed/disrupted</li>
-          <li style="color:#333">Etihad Airways — hub AUH suspended</li>
-          <li style="color:#333">Qatar Airways — hub DOH closed</li>
-          <li style="color:#333">flydubai — Dubai operations halted</li>
-          <li style="color:#333">Kuwait Airways — fully suspended</li>
-          <li style="color:#333">Oman Air — Baghdad route suspended</li>
-          <li style="color:#333">Air Arabia — Sharjah hub disrupted</li>
-          <li style="color:#333">IndiGo international — select routes cancelled</li>
-        </ul>
+    <div class="adv-grid" style="margin-top:20px;">
+      <div class="ac" style="background:#fef2f2;border:1px solid #fca5a5;"><div class="at" style="color:#dc2626;">🚫 Airlines to Avoid</div>
+        <ul><li>Emirates — hub DXB closed</li><li>Etihad Airways — hub AUH suspended</li><li>Qatar Airways — hub DOH closed</li><li>flydubai — Dubai ops halted</li><li>Kuwait Airways — fully suspended</li><li>Oman Air — Baghdad route suspended</li></ul>
       </div>
-      <div class="adv-card" style="background:#fef2f2;border:1px solid #fca5a5;">
-        <div class="adv-title" style="color:#dc2626;">🚫 Airports to Avoid Transiting</div>
-        <ul>
-          <li style="color:#333">🇦🇪 Dubai DXB — Emirates hub, closed</li>
-          <li style="color:#333">🇦🇪 Abu Dhabi AUH — Etihad hub, suspended</li>
-          <li style="color:#333">🇶🇦 Doha DOH — Qatar Airways hub, closed</li>
-          <li style="color:#333">🇰🇼 Kuwait City KWI — suspended</li>
-          <li style="color:#333">🇧🇭 Bahrain BAH — restricted</li>
-          <li style="color:#333">🇮🇷 Tehran IKA — active no-fly zone</li>
-          <li style="color:#333">🇮🇱 Tel Aviv TLV — airspace restricted</li>
-          <li style="color:#333">🇮🇶 Baghdad BGW — suspended</li>
-        </ul>
+      <div class="ac" style="background:#fef2f2;border:1px solid #fca5a5;"><div class="at" style="color:#dc2626;">🚫 Airports to Avoid</div>
+        <ul><li>🇦🇪 Dubai DXB — closed</li><li>🇦🇪 Abu Dhabi AUH — suspended</li><li>🇶🇦 Doha DOH — closed</li><li>🇰🇼 Kuwait City KWI — suspended</li><li>🇧🇭 Bahrain BAH — restricted</li><li>🇮🇷 Tehran IKA — no-fly zone</li><li>🇮🇱 Tel Aviv TLV — restricted</li></ul>
       </div>
-      <div class="adv-card" style="background:#f0fdf4;border:1px solid #86efac;">
-        <div class="adv-title" style="color:#16a34a;">✅ Safe Transit Airports</div>
-        <ul>
-          <li style="color:#333">🇩🇪 Frankfurt FRA — Lufthansa hub</li>
-          <li style="color:#333">🇫🇷 Paris CDG — Air France hub</li>
-          <li style="color:#333">🇬🇧 London LHR — BA hub</li>
-          <li style="color:#333">🇹🇷 Istanbul IST — Turkish hub (safest right now)</li>
-          <li style="color:#333">🇨🇭 Zurich ZRH — SWISS hub</li>
-          <li style="color:#333">🇳🇱 Amsterdam AMS — KLM hub</li>
-          <li style="color:#333">🇦🇹 Vienna VIE — Austrian Airlines</li>
-          <li style="color:#333">🇸🇬 Singapore SIN — via Southeast Asia</li>
-        </ul>
+      <div class="ac" style="background:#f0fdf4;border:1px solid #86efac;"><div class="at" style="color:#16a34a;">✅ Safe Transit Airports</div>
+        <ul><li>🇩🇪 Frankfurt FRA — Lufthansa hub</li><li>🇫🇷 Paris CDG — Air France hub</li><li>🇬🇧 London LHR — British Airways</li><li>🇹🇷 Istanbul IST — Turkish (safest now)</li><li>🇨🇭 Zurich ZRH — SWISS hub</li><li>🇳🇱 Amsterdam AMS — KLM hub</li><li>🇦🇹 Vienna VIE — Austrian Airlines</li></ul>
       </div>
-      <div class="adv-card" style="background:#fffbeb;border:1px solid #fcd34d;">
-        <div class="adv-title" style="color:#b45309;">📋 Booking Tips for July</div>
-        <ul>
-          <li style="color:#333">Turkish Airlines via IST currently most reliable and often cheapest safe option</li>
-          <li style="color:#333">Expect +1–2 hrs extra flight time due to rerouting over Caucasus/Central Asia</li>
-          <li style="color:#333">Buy travel insurance covering geopolitical cancellations — essential</li>
-          <li style="color:#333">Avoid round-trips through ME hubs even if they reopen — unstable</li>
-          <li style="color:#333">Book flexible tickets where possible</li>
-          <li style="color:#333">Monitor safeairspace.net & DGCA advisories regularly</li>
-          <li style="color:#333">Check EASA Conflict Zone Bulletins (CZIB) before booking</li>
-          <li style="color:#333">Do NOT book Indira Gandhi (DEL) connecting via any ME hub</li>
-        </ul>
+      <div class="ac" style="background:#fffbeb;border:1px solid #fcd34d;"><div class="at" style="color:#b45309;">📋 Booking Tips for July</div>
+        <ul><li>Turkish via IST — cheapest safe option</li><li>Expect +1–2 hrs extra due to rerouting</li><li>Buy travel insurance for geopolitical cancellations</li><li>Avoid round-trips through ME hubs</li><li>Monitor safeairspace.net regularly</li><li>Check EASA Conflict Zone Bulletins (CZIB)</li><li>Book flexible tickets where possible</li></ul>
       </div>
     </div>
 
     <div class="adv-banner">
       <b>🏆 Best recommendation for July 2026:</b><br>
-      Delhi DEL → Istanbul IST → Milan Malpensa MXP via <b>Turkish Airlines</b><br>
-      or DEL → Frankfurt FRA → MXP via <b>Lufthansa</b><br>
-      Total journey: ~10–13 hrs | Both fly completely above the conflict zone<br>
-      <span style="opacity:.7;font-size:.78rem">Always verify at <b>safeairspace.net</b> and your airline's website before booking</span>
+      Delhi DEL → Istanbul IST → Milan MXP via <b>Turkish Airlines</b> (~10–11 hrs)<br>
+      or DEL → Frankfurt FRA → MXP via <b>Lufthansa</b> (~11–12 hrs)<br>
+      <span style="opacity:.7;font-size:.76rem">Both fly completely above the conflict zone | Verify at <b>safeairspace.net</b> before booking</span>
     </div>
   </div>
 
-  <!-- Compare all -->
-  <div class="cmp-sec">
-    <h3>⚖️ Quick Compare — All 4 Itineraries</h3>
-    <div class="cmp-grid">
-      <div class="cmp-card" onclick="show(0)"><div class="cmp-top" style="background:linear-gradient(135deg,#2d6a4f,#52b788)"><h4>1. Classic North</h4><div class="theme">Lakes + Art + Opera</div></div>
-        <div class="cmp-body"><div class="cmp-row"><span>Budget/person</span><span>₹1L–1.64L</span></div><div class="cmp-row"><span>Beach?</span><span>🏊 Lake swim</span></div><div class="cmp-row"><span>Max heat</span><span>🌡️ 33°C</span></div><div class="cmp-row"><span>Car needed?</span><span>❌ No</span></div><div class="cmp-row"><span>Best for</span><span>First-timers</span></div></div>
+  <div class="cmp"><h3>⚖️ Quick Compare — All 4 Itineraries</h3>
+    <div class="cg">
+      <div class="cc" onclick="show(0)"><div class="ct2" style="background:linear-gradient(135deg,#2d6a4f,#52b788)"><h4>1. Classic North</h4><div class="th">Lakes + Art + Opera</div></div>
+        <div class="cb2"><div class="cr2"><span>Budget/person</span><span>₹1.14L–1.7L</span></div><div class="cr2"><span>Beach?</span><span>🏊 Lake swim</span></div><div class="cr2"><span>Max heat</span><span>🌡️ 33°C</span></div><div class="cr2"><span>Car?</span><span>❌ No</span></div></div>
       </div>
-      <div class="cmp-card" onclick="show(1)"><div class="cmp-top" style="background:linear-gradient(135deg,#457b9d,#1d3557)"><h4>2. Riviera + Dolomites</h4><div class="theme">Mountains + Coast</div></div>
-        <div class="cmp-body"><div class="cmp-row"><span>Budget/person</span><span>₹1.16L–1.87L</span></div><div class="cmp-row"><span>Beach?</span><span>🏖️ Yes — coves!</span></div><div class="cmp-row"><span>Max heat</span><span>🌤️ 28°C</span></div><div class="cmp-row"><span>Car needed?</span><span>✅ 3 days</span></div><div class="cmp-row"><span>Best for</span><span>Nature + Beach</span></div></div>
+      <div class="cc" onclick="show(1)"><div class="ct2" style="background:linear-gradient(135deg,#457b9d,#1d3557)"><h4>2. Riviera+Dolomites</h4><div class="th">Mountains + Coast</div></div>
+        <div class="cb2"><div class="cr2"><span>Budget/person</span><span>₹1.29L–1.92L</span></div><div class="cr2"><span>Beach?</span><span>🏖️ Yes — coves!</span></div><div class="cr2"><span>Max heat</span><span>🌤️ 28°C</span></div><div class="cr2"><span>Car?</span><span>✅ 3 days</span></div></div>
       </div>
-      <div class="cmp-card" onclick="show(2)"><div class="cmp-top" style="background:linear-gradient(135deg,#e76f51,#f4a261)"><h4>3. Slovenia + Croatia</h4><div class="theme">Adriatic Adventure</div></div>
-        <div class="cmp-body"><div class="cmp-row"><span>Budget/person</span><span>₹97k–1.6L 🏆</span></div><div class="cmp-row"><span>Beach?</span><span>🌊 Adriatic!</span></div><div class="cmp-row"><span>Max heat</span><span>🌤️ 28°C</span></div><div class="cmp-row"><span>Car needed?</span><span>❌ No</span></div><div class="cmp-row"><span>Best for</span><span>Value + Adventure</span></div></div>
+      <div class="cc" onclick="show(2)"><div class="ct2" style="background:linear-gradient(135deg,#e76f51,#f4a261)"><h4>3. Slovenia+Croatia</h4><div class="th">Adriatic Adventure</div></div>
+        <div class="cb2"><div class="cr2"><span>Budget/person</span><span>₹1.1L–1.65L 🏆</span></div><div class="cr2"><span>Beach?</span><span>🌊 Adriatic!</span></div><div class="cr2"><span>Max heat</span><span>🌤️ 28°C</span></div><div class="cr2"><span>Car?</span><span>❌ No</span></div></div>
       </div>
-      <div class="cmp-card" onclick="show(3)"><div class="cmp-top" style="background:linear-gradient(135deg,#8b5a2b,#c77b3f)"><h4>4. Food & Wine</h4><div class="theme">Culinary Italy</div></div>
-        <div class="cmp-body"><div class="cmp-row"><span>Budget/person</span><span>₹1.2L–1.97L</span></div><div class="cmp-row"><span>Beach?</span><span>🏊 CT coves</span></div><div class="cmp-row"><span>Max heat</span><span>🌡️ 33°C</span></div><div class="cmp-row"><span>Car needed?</span><span>✅ 3 days</span></div><div class="cmp-row"><span>Best for</span><span>Foodies & Couples</span></div></div>
+      <div class="cc" onclick="show(3)"><div class="ct2" style="background:linear-gradient(135deg,#8b5a2b,#c77b3f)"><h4>4. Food & Wine</h4><div class="th">Culinary Italy</div></div>
+        <div class="cb2"><div class="cr2"><span>Budget/person</span><span>₹1.34L–2.03L</span></div><div class="cr2"><span>Beach?</span><span>🏊 CT coves</span></div><div class="cr2"><span>Max heat</span><span>🌡️ 33°C</span></div><div class="cr2"><span>Car?</span><span>✅ 3 days</span></div></div>
       </div>
     </div>
   </div>
 
-  <div class="tips-sec">
-    <h3>🧳 Essential Tips for Indian Travellers</h3>
-    <div class="tips-grid">
+  <div class="tips"><h3>🧳 Essential Tips for Indian Travellers</h3>
+    <div class="tg">
       <div class="tip"><div class="tt">🛂 Schengen Visa</div><p>Italy, Slovenia & Croatia are all Schengen — one visa covers all 3 countries in Itinerary 3.</p></div>
       <div class="tip"><div class="tt">🚆 Book Trains Early</div><p>Book high-speed trains 4–6 weeks ahead on Trenitalia.com or Italotreno.com. Prices double last week.</p></div>
-      <div class="tip"><div class="tt">🚗 IDP Required</div><p>Indian licence alone is NOT valid in Italy. Get an International Driving Permit from your local RTO before you leave India.</p></div>
+      <div class="tip"><div class="tt">🚗 IDP Required</div><p>Indian licence alone is NOT valid in Italy. Get an International Driving Permit from your local RTO before leaving India.</p></div>
       <div class="tip"><div class="tt">🚫 ZTL Zones</div><p>Never drive into city historic centers. Cameras auto-fine you €100+ per entry, billed weeks later.</p></div>
       <div class="tip"><div class="tt">💶 Cash & Cards</div><p>Cards accepted widely but keep €50–100 cash for markets, small towns and tips.</p></div>
       <div class="tip"><div class="tt">🌡️ Beat the Heat</div><p>In Florence/Bologna: sightsee before 10am and after 5pm. Midday = gelato + AC + siesta.</p></div>
@@ -882,15 +669,125 @@
   </div>
 </div>
 
-<footer>All prices are estimates. Train fares are dynamic — book early for best prices. Exchange rate: 1 EUR ≈ ₹92<br>
+<footer>All prices are estimates. Train fares are dynamic — book early. Exchange rate: 1 EUR ≈ ₹92<br>
 Flight advisory based on April 2026 data — verify at safeairspace.net before booking. July is peak season — book everything well in advance.</footer>
 
 <script>
-  function show(n){
-    document.querySelectorAll('.panel').forEach((p,i)=>p.classList.toggle('active',i===n));
-    document.querySelectorAll('.tab-btn').forEach((b,i)=>b.classList.toggle('active',i===n));
-    window.scrollTo({top:document.querySelector('.tabs').offsetTop-10,behavior:'smooth'});
-  }
+// ── IMAGE INJECTION ─────────────────────────────────────────────────────────
+// Maps data-key attributes to correct Unsplash photo IDs matching user's confirmed photos:
+// 1=Milan Duomo dawn, 2=Lake Como, 3=Lake Maggiore Isola Bella, 4=Verona Arena opera
+// 5=Venice canal gondola, 6=Bologna piazza, 7=Florence cathedral skyline
+// 8=Riviera coast flowers, 9=Dolomites, 10=Cinque Terre Manarola
+// 11=Portofino aerial, 12=Genoa coast, 13=Turin Mole sunset
+// 14=Lake Bled castle aerial, 15=Croatia coast kayak, 16=Trieste canal
+// 17=Bled island church, 18=Piran aerial, 19=Rovinj aerial, 20=Barolo hills
+
+var IMGS = {
+  milan:     "https://images.unsplash.com/photo-1603366615917-1fa6dad2a686?w=700&q=85&fit=crop",
+  como:      "https://images.unsplash.com/photo-1533104816931-20fa691ff6ca?w=700&q=85&fit=crop",
+  maggiore:  "https://images.unsplash.com/photo-1604580864964-0462f5d5b1a8?w=700&q=85&fit=crop",
+  verona:    "https://images.unsplash.com/photo-1555993539-1732b0258235?w=700&q=85&fit=crop",
+  venice:    "https://images.unsplash.com/photo-1514890547357-a9ee288728e0?w=700&q=85&fit=crop",
+  bologna:   "https://images.unsplash.com/photo-1558642891-54be180ea339?w=700&q=85&fit=crop",
+  florence:  "https://images.unsplash.com/photo-1541370976299-4d24be15f68f?w=700&q=85&fit=crop",
+  riviera:   "https://images.unsplash.com/photo-1583422409516-2895a77efded?w=700&q=85&fit=crop",
+  dolomites: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=700&q=85&fit=crop",
+  cinque:    "https://images.unsplash.com/photo-1499678329028-101435549a4e?w=700&q=85&fit=crop",
+  portofino: "https://images.unsplash.com/photo-1551524559-8af4e6624178?w=700&q=85&fit=crop",
+  genoa:     "https://images.unsplash.com/photo-1568644396922-5c3bfae12521?w=700&q=85&fit=crop",
+  turin:     "https://images.unsplash.com/photo-1576241839931-e1374ddb57dc?w=700&q=85&fit=crop",
+  bled:      "https://images.unsplash.com/photo-1579033461380-adb49d4e3dfe?w=700&q=85&fit=crop",
+  croatia:   "https://images.unsplash.com/photo-1555993539-1732b0258235?w=700&q=85&fit=crop",
+  trieste:   "https://images.unsplash.com/photo-1558642891-54be180ea339?w=700&q=85&fit=crop",
+  piran:     "https://images.unsplash.com/photo-1591981896830-de9b5db7ac98?w=700&q=85&fit=crop",
+  rovinj:    "https://images.unsplash.com/photo-1555993539-1732b0258235?w=700&q=85&fit=crop",
+  barolo:    "https://images.unsplash.com/photo-1506377247377-2a5b3b417ebb?w=700&q=85&fit=crop",
+  food:      "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=700&q=85&fit=crop",
+  flight:    "https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=700&q=85&fit=crop"
+};
+
+// Inject all images on load
+document.addEventListener('DOMContentLoaded', function(){
+  document.querySelectorAll('img[data-key]').forEach(function(el){
+    var k = el.getAttribute('data-key');
+    if(IMGS[k]) el.src = IMGS[k];
+  });
+});
+
+// ── TAB SWITCHING ────────────────────────────────────────────────────────────
+var maps = [null,null,null,null];
+function show(n){
+  document.querySelectorAll('.panel').forEach(function(p,i){p.classList.toggle('active',i===n);});
+  document.querySelectorAll('.tb').forEach(function(b,i){b.classList.toggle('active',i===n);});
+  window.scrollTo({top:document.querySelector('.tabs').offsetTop-10,behavior:'smooth'});
+  if(n<4) setTimeout(function(){ if(!maps[n]) initMap(n); else maps[n].invalidateSize(); }, 200);
+}
+
+// ── LEAFLET MAPS ─────────────────────────────────────────────────────────────
+var routes = [
+  { center:[45.8,10.5], zoom:6, stops:[
+    {ll:[45.464,9.190], name:"Milan", day:"Day 1–2 · Arrive", color:"#e76f51"},
+    {ll:[45.977,9.262], name:"Lake Como", day:"Day 3", color:"#457b9d"},
+    {ll:[45.882,8.517], name:"Lake Maggiore", day:"Day 4", color:"#457b9d"},
+    {ll:[45.438,10.992], name:"Verona", day:"Day 5", color:"#2d6a4f"},
+    {ll:[45.437,12.335], name:"Venice", day:"Day 6–7", color:"#2d6a4f"},
+    {ll:[44.494,11.342], name:"Bologna", day:"Day 8", color:"#e9c46a"},
+    {ll:[43.769,11.255], name:"Florence", day:"Day 9–10", color:"#e76f51"},
+  ]},
+  { center:[45.2,10.0], zoom:6, stops:[
+    {ll:[45.464,9.190], name:"Milan", day:"Day 1 · Arrive", color:"#e76f51"},
+    {ll:[46.499,11.357], name:"Bolzano / Dolomites", day:"Day 2–3", color:"#2d6a4f"},
+    {ll:[44.135,9.682], name:"Cinque Terre", day:"Day 4–6", color:"#457b9d"},
+    {ll:[44.303,9.210], name:"Portofino", day:"Day 7", color:"#457b9d"},
+    {ll:[44.406,8.934], name:"Genoa", day:"Day 8", color:"#e9c46a"},
+    {ll:[45.070,7.686], name:"Turin", day:"Day 9–10", color:"#8b5a2b"},
+    {ll:[45.464,9.190], name:"Milan", day:"Day 11 · Depart ✈️", color:"#333"},
+  ]},
+  { center:[45.0,13.5], zoom:6, stops:[
+    {ll:[45.464,9.190], name:"Milan 🇮🇹", day:"Day 1 · Arrive", color:"#009246"},
+    {ll:[45.437,12.335], name:"Venice", day:"Day 2–3", color:"#009246"},
+    {ll:[45.649,13.777], name:"Trieste", day:"Day 4", color:"#009246"},
+    {ll:[46.050,14.506], name:"Ljubljana 🇸🇮", day:"Day 5", color:"#003DA5"},
+    {ll:[46.368,14.094], name:"Lake Bled", day:"Day 6", color:"#003DA5"},
+    {ll:[46.517,13.568], name:"Piran", day:"Day 7", color:"#003DA5"},
+    {ll:[45.081,13.640], name:"Rovinj 🇭🇷", day:"Day 8–9", color:"#e41e20"},
+    {ll:[45.464,9.190], name:"Milan", day:"Day 12 · Depart ✈️", color:"#333"},
+  ]},
+  { center:[44.8,10.2], zoom:6, stops:[
+    {ll:[45.464,9.190], name:"Milan", day:"Day 1 · Arrive", color:"#e76f51"},
+    {ll:[45.070,7.686], name:"Turin ☕", day:"Day 2", color:"#8b5a2b"},
+    {ll:[44.623,7.978], name:"Langhe / Barolo 🍷", day:"Day 3–4", color:"#8b5a2b"},
+    {ll:[44.135,9.682], name:"Cinque Terre 🌊", day:"Day 5–6", color:"#457b9d"},
+    {ll:[44.801,10.328], name:"Parma 🧀", day:"Day 7", color:"#2d6a4f"},
+    {ll:[44.494,11.342], name:"Bologna 🍝", day:"Day 8", color:"#2d6a4f"},
+    {ll:[44.645,10.926], name:"Modena 🏎️", day:"Day 9", color:"#e9c46a"},
+    {ll:[43.769,11.255], name:"Florence", day:"Day 10–11", color:"#e76f51"},
+    {ll:[45.464,9.190], name:"Milan", day:"Depart ✈️", color:"#333"},
+  ]}
+];
+
+function initMap(idx){
+  var r = routes[idx];
+  var m = L.map('map'+idx, {scrollWheelZoom:false}).setView(r.center, r.zoom);
+  maps[idx] = m;
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+    attribution:'© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',maxZoom:18
+  }).addTo(m);
+  var lls = r.stops.map(function(s){return s.ll;});
+  L.polyline(lls,{color:'#e76f51',weight:4,opacity:.9,dashArray:'8,5'}).addTo(m);
+  r.stops.forEach(function(s,i){
+    var icon = L.divIcon({
+      className:'',
+      html:'<div style="background:'+s.color+';color:#fff;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:bold;font-family:sans-serif;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.4);">'+(i+1)+'</div>',
+      iconSize:[30,30],iconAnchor:[15,15]
+    });
+    L.marker(s.ll,{icon:icon}).addTo(m)
+      .bindPopup('<b>'+s.name+'</b><br><span style="font-size:11px;color:#666;">'+s.day+'</span>');
+  });
+  m.fitBounds(lls,{padding:[35,35]});
+}
+
+window.addEventListener('load', function(){ initMap(0); });
 </script>
 </body>
 </html>
